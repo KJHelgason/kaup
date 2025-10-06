@@ -1,5 +1,8 @@
 using Kaup.Api.Data;
+using Kaup.Api.Services;
 using Microsoft.EntityFrameworkCore;
+using Amazon.S3;
+using Amazon.Runtime;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,6 +16,25 @@ builder.Services.AddDbContext<KaupDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("SqliteConnection")));
 
 Console.WriteLine("✓ Using SQLite database (kaup.db)");
+
+// Configure AWS S3
+var awsOptions = builder.Configuration.GetSection("AWS");
+var accessKey = awsOptions["AccessKey"];
+var secretKey = awsOptions["SecretKey"];
+var region = awsOptions["Region"] ?? "us-east-1";
+
+if (!string.IsNullOrEmpty(accessKey) && !string.IsNullOrEmpty(secretKey))
+{
+    var credentials = new BasicAWSCredentials(accessKey, secretKey);
+    var config = new AmazonS3Config { RegionEndpoint = Amazon.RegionEndpoint.GetBySystemName(region) };
+    builder.Services.AddSingleton<IAmazonS3>(new AmazonS3Client(credentials, config));
+    builder.Services.AddScoped<S3Service>();
+    Console.WriteLine("✓ AWS S3 configured");
+}
+else
+{
+    Console.WriteLine("⚠ AWS S3 not configured - image upload will not work");
+}
 
 // Configure CORS
 builder.Services.AddCors(options =>

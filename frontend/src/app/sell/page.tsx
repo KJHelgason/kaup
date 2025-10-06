@@ -9,7 +9,8 @@ import { createListing } from "@/lib/api"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ImagePlus, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
+import { MultipleImageUpload } from "@/components/MultipleImageUpload"
 
 export default function SellPage() {
   const { t } = useLanguage()
@@ -26,6 +27,7 @@ export default function SellPage() {
   const [condition, setCondition] = useState("")
   const [listingType, setListingType] = useState("Auction")
   const [endDate, setEndDate] = useState("")
+  const [imageUrls, setImageUrls] = useState<string[]>([])
 
   const categories = [
     "Rafeindatækni",
@@ -82,7 +84,7 @@ export default function SellPage() {
         buyNowPrice: buyNowPrice ? parseFloat(buyNowPrice) : undefined,
         category,
         condition,
-        imageUrls: [], // TODO: Implement image upload
+        imageUrls: imageUrls,
         listingType: listingType,
         isFeatured: false,
         endDate: endDate ? new Date(endDate).toISOString() : undefined
@@ -297,15 +299,16 @@ export default function SellPage() {
                   </div>
                 )}
 
-                {/* Images - Placeholder for future implementation */}
+                {/* Images Upload */}
                 <div>
                   <Label>{t("images")} ({t("optional")})</Label>
-                  <div className="border-2 border-dashed border-muted-foreground/25 rounded-lg p-8 text-center hover:border-muted-foreground/50 transition-colors cursor-not-allowed">
-                    <ImagePlus className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground">
-                      {t("imageUploadComingSoon")}
-                    </p>
-                  </div>
+                  <MultipleImageUpload
+                    onUpload={setImageUrls}
+                    currentImages={imageUrls}
+                  />
+                  <p className="text-xs text-muted-foreground mt-2">
+                    {t("imagesHelp")}
+                  </p>
                 </div>
 
                 {/* Error Message */}

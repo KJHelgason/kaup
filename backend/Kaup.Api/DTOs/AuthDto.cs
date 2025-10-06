@@ -15,6 +15,15 @@ public class LoginDto
     public string Password { get; set; } = string.Empty;
 }
 
+public class GoogleAuthDto
+{
+    public string Email { get; set; } = string.Empty;
+    public string GoogleId { get; set; } = string.Empty;
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string? ProfileImageUrl { get; set; }
+}
+
 public class UserDto
 {
     public Guid Id { get; set; }
@@ -42,6 +51,7 @@ public class UpdateProfileDto
     public string? Address { get; set; }
     public string? City { get; set; }
     public string? PostalCode { get; set; }
+    public string? ProfileImageUrl { get; set; }
 }
 
 public class AuthResponseDto

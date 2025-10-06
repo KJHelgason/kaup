@@ -9,6 +9,10 @@ public class User
     public string LastName { get; set; } = string.Empty;
     public string? PhoneNumber { get; set; }
     public string? ProfileImageUrl { get; set; }
+    
+    // OAuth Provider Info
+    public string? GoogleId { get; set; }
+    public string? AuthProvider { get; set; } // "Local", "Google"
     public string? Bio { get; set; }
     public string? Address { get; set; }
     public string? City { get; set; }

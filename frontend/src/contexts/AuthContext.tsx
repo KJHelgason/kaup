@@ -1,7 +1,7 @@
 "use client"
 
 import React, { createContext, useContext, useState, useEffect } from 'react'
-import { User, login as apiLogin, register as apiRegister } from '@/lib/api'
+import { User, login as apiLogin, register as apiRegister, googleAuth as apiGoogleAuth } from '@/lib/api'
 
 type AuthContextType = {
   user: User | null
@@ -14,6 +14,13 @@ type AuthContextType = {
     firstName: string
     lastName: string
     phoneNumber?: string
+  }) => Promise<void>
+  googleLogin: (data: {
+    email: string
+    googleId: string
+    firstName?: string
+    lastName?: string
+    profileImageUrl?: string
   }) => Promise<void>
   logout: () => void
   isAuthenticated: boolean
@@ -62,6 +69,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const googleLogin = async (data: {
+    email: string
+    googleId: string
+    firstName?: string
+    lastName?: string
+    profileImageUrl?: string
+  }) => {
+    const response = await apiGoogleAuth(data)
+    if (response) {
+      setToken(response.token)
+      setUser(response.user)
+      localStorage.setItem('kaup-token', response.token)
+      localStorage.setItem('kaup-user', JSON.stringify(response.user))
+    }
+  }
+
   const logout = () => {
     setToken(null)
     setUser(null)
@@ -82,6 +105,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         token,
         login,
         register,
+        googleLogin,
         logout,
         isAuthenticated: !!token && !!user,
       }}

@@ -235,6 +235,42 @@ export async function login(email: string, password: string): Promise<AuthRespon
   }
 }
 
+export async function googleAuth(data: {
+  email: string
+  googleId: string
+  firstName?: string
+  lastName?: string
+  profileImageUrl?: string
+}): Promise<AuthResponse | null> {
+  try {
+    console.log('Attempting Google auth with data:', { ...data, googleId: 'HIDDEN' })
+    console.log('API URL:', `${API_URL}/auth/google`)
+    
+    const response = await fetch(`${API_URL}/auth/google`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(data),
+    })
+    
+    console.log('Response status:', response.status)
+    
+    if (!response.ok) {
+      const error = await response.text()
+      console.error('API error response:', error)
+      throw new Error(error || 'Google authentication failed')
+    }
+    
+    const result = await response.json()
+    console.log('Auth successful')
+    return result
+  } catch (error) {
+    console.error('Error with Google auth:', error)
+    throw error
+  }
+}
+
 export async function getUser(id: string): Promise<User | null> {
   try {
     const response = await fetch(`${API_URL}/users/${id}`)
@@ -314,6 +350,7 @@ export async function updateProfile(userId: string, data: {
   address?: string
   city?: string
   postalCode?: string
+  profileImageUrl?: string
 }): Promise<User | null> {
   try {
     const response = await fetch(`${API_URL}/users/${userId}`, {

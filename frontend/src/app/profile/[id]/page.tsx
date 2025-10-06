@@ -9,7 +9,8 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { useAuth } from "@/contexts/AuthContext"
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Star, MapPin, Phone, Mail, Calendar, Package, MessageSquare, Edit } from "lucide-react"
+import { Star, MapPin, Phone, Mail, Calendar, Package, MessageSquare, Edit, User as UserIcon } from "lucide-react"
+import Image from "next/image"
 
 export default function ProfilePage() {
   const { t } = useLanguage()
@@ -42,6 +43,16 @@ export default function ProfilePage() {
     
     loadProfile()
   }, [userId])
+
+  // Sync with currentUser if viewing own profile
+  useEffect(() => {
+    if (isOwnProfile && currentUser && user) {
+      // Update profile image if it changed in currentUser (from account page save)
+      if (currentUser.profileImageUrl !== user.profileImageUrl) {
+        setUser(prev => prev ? { ...prev, profileImageUrl: currentUser.profileImageUrl } : prev)
+      }
+    }
+  }, [currentUser, isOwnProfile, user])
 
   if (loading) {
     return (
@@ -97,9 +108,21 @@ export default function ProfilePage() {
               <div className="flex flex-col md:flex-row gap-6">
                 {/* Avatar */}
                 <div className="flex-shrink-0">
-                  <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center text-primary-foreground text-3xl md:text-4xl font-bold">
-                    {user.firstName[0]}{user.lastName[0]}
-                  </div>
+                  {user.profileImageUrl ? (
+                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-background shadow-lg relative">
+                      <Image
+                        src={user.profileImageUrl}
+                        alt={`${user.firstName} ${user.lastName}`}
+                        fill
+                        className="object-cover"
+                        unoptimized
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center text-primary-foreground text-3xl md:text-4xl font-bold shadow-lg">
+                      {user.firstName[0]}{user.lastName[0]}
+                    </div>
+                  )}
                 </div>
 
                 {/* User Info */}

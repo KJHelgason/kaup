@@ -84,6 +84,9 @@ const translations: Translations = {
   logout: { is: 'Útskrá', en: 'Logout' },
   signOut: { is: 'Útskrá', en: 'Sign Out' },
   cancel: { is: 'Hætta við', en: 'Cancel' },
+  orContinueWith: { is: 'Eða halda áfram með', en: 'Or continue with' },
+  signInWithGoogle: { is: 'Skrá inn með Google', en: 'Sign in with Google' },
+  signUpWithGoogle: { is: 'Nýskrá með Google', en: 'Sign up with Google' },
   
   // Auth
   email: { is: 'Netfang', en: 'Email' },
@@ -116,6 +119,7 @@ const translations: Translations = {
   address: { is: 'Heimilisfang', en: 'Address' },
   city: { is: 'Borg', en: 'City' },
   postalCode: { is: 'Póstnúmer', en: 'Postal Code' },
+  profileImage: { is: 'Prófílmynd', en: 'Profile Image' },
   emailCannotBeChanged: { is: 'Netfang er ekki hægt að breyta', en: 'Email cannot be changed' },
   saveChanges: { is: 'Vista breytingar', en: 'Save Changes' },
   saving: { is: 'Vista...', en: 'Saving...' },
@@ -161,6 +165,7 @@ const translations: Translations = {
   endDateHelp: { is: 'Hvenær á uppboðinu að ljúka', en: 'When should the auction end' },
   endDateRequired: { is: 'Lokadagsetning er nauðsynleg fyrir uppboð', en: 'End date is required for auctions' },
   images: { is: 'Myndir', en: 'Images' },
+  imagesHelp: { is: 'Dragðu myndir hingað eða smelltu til að velja (allt að 10 myndir)', en: 'Drag images here or click to select (up to 10 images)' },
   imageUploadComingSoon: { is: 'Myndaupphleðsla kemur fljótlega', en: 'Image upload coming soon' },
   fillRequiredFields: { is: 'Vinsamlegast fylltu út alla nauðsynlega reiti', en: 'Please fill in all required fields' },
   priceInvalid: { is: 'Verð verður að vera hærra en 0', en: 'Price must be greater than 0' },

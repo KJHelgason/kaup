@@ -47,7 +47,8 @@ public class AuthController : ControllerBase
             PasswordHash = passwordHash,
             FirstName = registerDto.FirstName,
             LastName = registerDto.LastName,
-            PhoneNumber = registerDto.PhoneNumber
+            PhoneNumber = registerDto.PhoneNumber,
+            AuthProvider = "Local"
         };
 
         _context.Users.Add(user);
@@ -144,5 +145,93 @@ public class AuthController : ControllerBase
     {
         var passwordHash = HashPassword(password);
         return passwordHash == hash;
+    }
+
+    [HttpPost("google")]
+    public async Task<ActionResult<AuthResponseDto>> GoogleAuth(GoogleAuthDto googleAuthDto)
+    {
+        // Validate input
+        if (string.IsNullOrWhiteSpace(googleAuthDto.Email) || 
+            string.IsNullOrWhiteSpace(googleAuthDto.GoogleId))
+        {
+            return BadRequest("Google authentication data is invalid");
+        }
+
+        // Check if user exists with this Google ID
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.GoogleId == googleAuthDto.GoogleId);
+        
+        if (user == null)
+        {
+            // Check if email already exists with different auth provider
+            user = await _context.Users.FirstOrDefaultAsync(u => u.Email == googleAuthDto.Email);
+            
+            if (user != null)
+            {
+                // Email exists but with different provider - link accounts
+                if (string.IsNullOrEmpty(user.GoogleId))
+                {
+                    user.GoogleId = googleAuthDto.GoogleId;
+                    user.AuthProvider = "Google";
+                    if (!string.IsNullOrEmpty(googleAuthDto.ProfileImageUrl))
+                    {
+                        user.ProfileImageUrl = googleAuthDto.ProfileImageUrl;
+                    }
+                    await _context.SaveChangesAsync();
+                }
+            }
+            else
+            {
+                // Create new user from Google data
+                user = new User
+                {
+                    Email = googleAuthDto.Email,
+                    GoogleId = googleAuthDto.GoogleId,
+                    FirstName = googleAuthDto.FirstName ?? "",
+                    LastName = googleAuthDto.LastName ?? "",
+                    ProfileImageUrl = googleAuthDto.ProfileImageUrl,
+                    PasswordHash = "", // No password for Google auth
+                    AuthProvider = "Google"
+                };
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+            }
+        }
+        else
+        {
+            // Update profile image if provided
+            if (!string.IsNullOrEmpty(googleAuthDto.ProfileImageUrl))
+            {
+                user.ProfileImageUrl = googleAuthDto.ProfileImageUrl;
+                await _context.SaveChangesAsync();
+            }
+        }
+
+        // Generate token
+        var token = user.Id.ToString();
+
+        var userDto = new UserDto
+        {
+            Id = user.Id,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            PhoneNumber = user.PhoneNumber,
+            ProfileImageUrl = user.ProfileImageUrl,
+            Bio = user.Bio,
+            Address = user.Address,
+            City = user.City,
+            PostalCode = user.PostalCode,
+            AverageRating = user.AverageRating,
+            TotalRatings = user.TotalRatings,
+            TotalSales = user.TotalSales,
+            CreatedAt = user.CreatedAt
+        };
+
+        return Ok(new AuthResponseDto
+        {
+            Token = token,
+            User = userDto
+        });
     }
 }

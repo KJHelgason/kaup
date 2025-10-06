@@ -72,12 +72,30 @@ public class UsersController : ControllerBase
         
         if (updateDto.PostalCode != null)
             user.PostalCode = updateDto.PostalCode;
+        
+        if (updateDto.ProfileImageUrl != null)
+            user.ProfileImageUrl = updateDto.ProfileImageUrl;
 
         user.UpdatedAt = DateTime.UtcNow;
 
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        // Return the updated user
+        return Ok(new
+        {
+            id = user.Id,
+            email = user.Email,
+            firstName = user.FirstName,
+            lastName = user.LastName,
+            phoneNumber = user.PhoneNumber,
+            bio = user.Bio,
+            address = user.Address,
+            city = user.City,
+            postalCode = user.PostalCode,
+            profileImageUrl = user.ProfileImageUrl,
+            createdAt = user.CreatedAt,
+            updatedAt = user.UpdatedAt
+        });
     }
 
     [HttpGet("{id}/listings")]

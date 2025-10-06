@@ -12,6 +12,7 @@ import { updateProfile } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { User, Save, Loader2 } from "lucide-react"
+import { ImageUpload } from "@/components/ImageUpload"
 
 export default function AccountPage() {
   const { t } = useLanguage()
@@ -27,6 +28,7 @@ export default function AccountPage() {
     city: "",
     postalCode: ""
   })
+  const [profileImageUrl, setProfileImageUrl] = useState<string>("")
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [success, setSuccess] = useState(false)
@@ -46,6 +48,7 @@ export default function AccountPage() {
       city: user.city || "",
       postalCode: user.postalCode || ""
     })
+    setProfileImageUrl(user.profileImageUrl || "")
   }, [user, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -57,7 +60,10 @@ export default function AccountPage() {
     try {
       if (!user) return
 
-      const updatedUser = await updateProfile(user.id, formData)
+      const updatedUser = await updateProfile(user.id, {
+        ...formData,
+        profileImageUrl: profileImageUrl || undefined
+      })
       
       if (!updatedUser) {
         setError(t("updateError"))
@@ -100,6 +106,16 @@ export default function AccountPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
+                {/* Profile Image */}
+                <div className="space-y-2">
+                  <Label>{t("profileImage")} ({t("optional")})</Label>
+                  <ImageUpload
+                    currentImage={profileImageUrl}
+                    onUpload={setProfileImageUrl}
+                    type="profile"
+                  />
+                </div>
+
                 {/* Name Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">

@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { GoogleProvider } from "@/components/GoogleProvider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -20,18 +21,20 @@ export default function RootLayout({
   return (
     <html lang="is" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="system"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>
-            <LanguageProvider>
-              {children}
-            </LanguageProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        <GoogleProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthProvider>
+              <LanguageProvider>
+                {children}
+              </LanguageProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </GoogleProvider>
       </body>
     </html>
   );
