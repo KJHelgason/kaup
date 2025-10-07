@@ -135,20 +135,11 @@ public class ListingsController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<ListingDto>> CreateListing(CreateListingDto createDto)
     {
-        // TODO: Get seller ID from authenticated user
-        // For now, we'll create a dummy seller if none exists
-        var seller = await _context.Users.FirstOrDefaultAsync();
+        // Get seller from the provided SellerId
+        var seller = await _context.Users.FindAsync(createDto.SellerId);
         if (seller == null)
         {
-            seller = new User
-            {
-                Email = "seller@kaup.is",
-                PasswordHash = "dummy",
-                FirstName = "Test",
-                LastName = "Seller"
-            };
-            _context.Users.Add(seller);
-            await _context.SaveChangesAsync();
+            return BadRequest("Invalid seller ID");
         }
 
         var listing = new Listing
@@ -233,18 +224,55 @@ public class ListingsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteListing(Guid id)
+    public async Task<IActionResult> DeleteListing(Guid id, [FromQuery] Guid sellerId)
     {
-        var listing = await _context.Listings.FindAsync(id);
+        var listing = await _context.Listings
+            .Include(l => l.Bids)
+            .FirstOrDefaultAsync(l => l.Id == id);
+
         if (listing == null)
-            return NotFound();
+            return NotFound(new { message = "Listing not found" });
 
-        // TODO: Check if authenticated user is the seller
+        // Verify that the user deleting the listing is the seller
+        if (listing.SellerId != sellerId)
+            return Forbid();
 
+        var bidCount = listing.Bids.Count;
+        var hasRecentEnd = listing.EndDate.HasValue && 
+                          listing.EndDate.Value.Subtract(DateTime.UtcNow).TotalHours < 24;
+
+        // Business rules for deletion
+        if (bidCount > 0 && hasRecentEnd)
+        {
+            return BadRequest(new 
+            { 
+                message = "Cannot delete listing with bids that ends within 24 hours",
+                canDelete = false,
+                bidCount = bidCount,
+                hoursRemaining = (double?)(listing.EndDate?.Subtract(DateTime.UtcNow).TotalHours)
+            });
+        }
+
+        // If there are bids, we mark as cancelled rather than deleting
+        if (bidCount > 0)
+        {
+            listing.Status = ListingStatus.Cancelled;
+            listing.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+            
+            return Ok(new 
+            { 
+                message = "Listing cancelled successfully",
+                cancelled = true,
+                bidCount = bidCount
+            });
+        }
+
+        // No bids - safe to delete
         _context.Listings.Remove(listing);
         await _context.SaveChangesAsync();
 
-        return NoContent();
+        return Ok(new { message = "Listing deleted successfully", deleted = true });
     }
 
     [HttpGet("featured")]

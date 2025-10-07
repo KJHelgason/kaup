@@ -126,6 +126,7 @@ export async function createListing(listing: {
   listingType: string
   isFeatured: boolean
   endDate?: string
+  sellerId: string
 }): Promise<Listing | null> {
   try {
     const response = await fetch(`${API_URL}/listings`, {
@@ -144,6 +145,40 @@ export async function createListing(listing: {
   } catch (error) {
     console.error('Error creating listing:', error)
     return null
+  }
+}
+
+export async function deleteListing(listingId: string, sellerId: string): Promise<{
+  success: boolean
+  message?: string
+  cancelled?: boolean
+  deleted?: boolean
+  bidCount?: number
+}> {
+  try {
+    const response = await fetch(`${API_URL}/listings/${listingId}?sellerId=${sellerId}`, {
+      method: 'DELETE',
+    })
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: response.statusText }))
+      return {
+        success: false,
+        message: error.message || 'Failed to delete listing'
+      }
+    }
+    
+    const result = await response.json()
+    return {
+      success: true,
+      ...result
+    }
+  } catch (error) {
+    console.error('Error deleting listing:', error)
+    return {
+      success: false,
+      message: 'An error occurred while deleting the listing'
+    }
   }
 }
 

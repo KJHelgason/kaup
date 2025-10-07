@@ -115,6 +115,7 @@ export function MultipleImageUpload({ onUpload, currentImages = [], maxImages = 
               className="object-cover"
             />
             <button
+              type="button"
               onClick={() => handleRemove(index)}
               className="absolute top-2 right-2 p-1.5 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
             >
@@ -131,6 +132,7 @@ export function MultipleImageUpload({ onUpload, currentImages = [], maxImages = 
         {/* Upload Button */}
         {images.length < maxImages && (
           <button
+            type="button"
             onClick={() => fileInputRef.current?.click()}
             disabled={uploading}
             className="aspect-square rounded-lg border-2 border-dashed border-muted-foreground/25 hover:border-muted-foreground/50 transition-colors bg-muted/50 flex flex-col items-center justify-center gap-2"

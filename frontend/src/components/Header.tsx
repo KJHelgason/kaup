@@ -57,12 +57,11 @@ export function Header() {
             {/* Language Switcher */}
             <Button
               variant="ghost"
-              size="sm"
+              size="icon"
               onClick={() => setLanguage(language === 'is' ? 'en' : 'is')}
-              className="gap-2"
+              title={language === 'is' ? 'Switch to English' : 'Skipta yfir á íslensku'}
             >
-              <span className="text-lg">{language === 'is' ? '🇮🇸' : '🇬🇧'}</span>
-              <span className="hidden sm:inline">{language.toUpperCase()}</span>
+              <span className="text-2xl">{language === 'is' ? '🇮🇸' : '🇬🇧'}</span>
             </Button>
 
             {/* Theme Switcher */}

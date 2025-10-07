@@ -7,16 +7,25 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { createListing } from "@/lib/api"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { useState } from "react"
+import { useAuth } from "@/contexts/AuthContext"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2 } from "lucide-react"
 import { MultipleImageUpload } from "@/components/MultipleImageUpload"
 
 export default function SellPage() {
   const { t } = useLanguage()
+  const { user, isAuthenticated } = useAuth()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+
+  // Check authentication
+  useEffect(() => {
+    if (!isAuthenticated) {
+      router.push("/login")
+    }
+  }, [isAuthenticated, router])
 
   // Form state
   const [title, setTitle] = useState("")
@@ -74,6 +83,11 @@ export default function SellPage() {
       return
     }
 
+    if (!user) {
+      setError(t("loginRequired"))
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -87,7 +101,8 @@ export default function SellPage() {
         imageUrls: imageUrls,
         listingType: listingType,
         isFeatured: false,
-        endDate: endDate ? new Date(endDate).toISOString() : undefined
+        endDate: endDate ? new Date(endDate).toISOString() : undefined,
+        sellerId: user.id
       })
 
       // Redirect to the new listing

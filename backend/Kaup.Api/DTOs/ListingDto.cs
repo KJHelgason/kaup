@@ -40,6 +40,7 @@ public class CreateListingDto
     public string ListingType { get; set; } = string.Empty;
     public bool IsFeatured { get; set; }
     public DateTime? EndDate { get; set; }
+    public Guid SellerId { get; set; }
 }
 
 public class UpdateListingDto
