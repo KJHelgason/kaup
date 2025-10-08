@@ -30,6 +30,7 @@ export async function getListings(params?: {
   minPrice?: number
   maxPrice?: number
   featured?: boolean
+  listingType?: string
   page?: number
   pageSize?: number
 }): Promise<{ listings: Listing[]; totalCount: number }> {
@@ -78,6 +79,25 @@ export async function getListing(id: string): Promise<Listing | null> {
   } catch (error) {
     console.error('Error fetching listing:', error)
     return null
+  }
+}
+
+export async function getEndingSoonAuctions(count: number = 6): Promise<Listing[]> {
+  try {
+    const response = await fetch(`${API_URL}/listings/ending-soon?count=${count}`, {
+      next: { revalidate: 30 } // Cache for 30 seconds (auctions change frequently)
+    })
+    
+    if (!response.ok) {
+      // Fallback to regular listings filtered for auctions if endpoint doesn't exist yet
+      const result = await getListings({ pageSize: count })
+      return result.listings.filter(l => l.listingType === 'Auction' && l.endDate).slice(0, count)
+    }
+    
+    return response.json()
+  } catch (error) {
+    console.error('Error fetching ending soon auctions:', error)
+    return []
   }
 }
 

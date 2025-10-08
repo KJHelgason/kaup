@@ -26,6 +26,7 @@ public class ListingsController : ControllerBase
         [FromQuery] decimal? minPrice = null,
         [FromQuery] decimal? maxPrice = null,
         [FromQuery] bool? featured = null,
+        [FromQuery] string? listingType = null,
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20)
     {
@@ -49,6 +50,9 @@ public class ListingsController : ControllerBase
 
         if (featured.HasValue)
             query = query.Where(l => l.IsFeatured == featured.Value);
+
+        if (!string.IsNullOrEmpty(listingType) && Enum.TryParse<ListingType>(listingType, out var parsedListingType))
+            query = query.Where(l => l.ListingType == parsedListingType);
 
         var totalCount = await query.CountAsync();
         
@@ -283,6 +287,52 @@ public class ListingsController : ControllerBase
             .Include(l => l.Bids)
             .Where(l => l.Status == ListingStatus.Active && l.IsFeatured)
             .OrderByDescending(l => l.CreatedAt)
+            .Take(count)
+            .ToListAsync();
+
+        var listings = listingsQuery.Select(l => new ListingDto
+            {
+                Id = l.Id,
+                Title = l.Title,
+                Description = l.Description,
+                Price = l.Price,
+                BuyNowPrice = l.BuyNowPrice,
+                Category = l.Category,
+                Condition = l.Condition,
+                ImageUrls = l.ImageUrls,
+                ListingType = l.ListingType.ToString(),
+                Status = l.Status.ToString(),
+                IsFeatured = l.IsFeatured,
+                CreatedAt = l.CreatedAt,
+                EndDate = l.EndDate,
+                Seller = new SellerDto
+                {
+                    Id = l.Seller.Id,
+                    FirstName = l.Seller.FirstName,
+                    LastName = l.Seller.LastName,
+                    ProfileImageUrl = l.Seller.ProfileImageUrl
+                },
+                BidCount = l.Bids.Count,
+                HighestBid = l.Bids.Any() ? l.Bids.Max(b => b.Amount) : null
+            })
+            .ToList();
+
+        return Ok(listings);
+    }
+
+    [HttpGet("ending-soon")]
+    public async Task<ActionResult<IEnumerable<ListingDto>>> GetEndingSoonAuctions([FromQuery] int count = 6)
+    {
+        var now = DateTime.UtcNow;
+        
+        var listingsQuery = await _context.Listings
+            .Include(l => l.Seller)
+            .Include(l => l.Bids)
+            .Where(l => l.Status == ListingStatus.Active 
+                     && l.ListingType == ListingType.Auction 
+                     && l.EndDate.HasValue 
+                     && l.EndDate.Value > now)
+            .OrderBy(l => l.EndDate)
             .Take(count)
             .ToListAsync();
 

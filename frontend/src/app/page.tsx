@@ -3,23 +3,37 @@
 import { Header } from "@/components/Header"
 import { ListingCard } from "@/components/ListingCard"
 import { Button } from "@/components/ui/button"
-import { getFeaturedListings, Listing } from "@/lib/api"
+import { getFeaturedListings, getEndingSoonAuctions, Listing } from "@/lib/api"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { useEffect, useState } from "react"
 import Link from "next/link"
+import { Clock } from "lucide-react"
 
 export default function Home() {
   const { t } = useLanguage()
   const [featuredListings, setFeaturedListings] = useState<Listing[]>([])
-  const [loading, setLoading] = useState(true)
+  const [endingSoonAuctions, setEndingSoonAuctions] = useState<Listing[]>([])
+  const [loadingFeatured, setLoadingFeatured] = useState(true)
+  const [loadingAuctions, setLoadingAuctions] = useState(true)
 
   useEffect(() => {
     async function loadListings() {
+      setLoadingFeatured(true)
       const listings = await getFeaturedListings(6)
       setFeaturedListings(listings)
-      setLoading(false)
+      setLoadingFeatured(false)
     }
     loadListings()
+  }, [])
+
+  useEffect(() => {
+    async function loadAuctions() {
+      setLoadingAuctions(true)
+      const auctions = await getEndingSoonAuctions(6)
+      setEndingSoonAuctions(auctions)
+      setLoadingAuctions(false)
+    }
+    loadAuctions()
   }, [])
 
   return (
@@ -50,6 +64,45 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Featured Auctions Section */}
+        <section className="py-12 md:py-16 bg-muted/30">
+          <div className="container mx-auto px-4">
+            <div className="flex items-center justify-between mb-8">
+              <div className="flex items-center gap-3">
+                <Clock className="w-8 h-8 text-primary" />
+                <h2 className="text-3xl font-bold">
+                  {t("featuredAuctions")}
+                </h2>
+              </div>
+              <Link href="/browse?listingType=Auction">
+                <Button variant="outline">
+                  {t("showMore")}
+                </Button>
+              </Link>
+            </div>
+
+            {loadingAuctions ? (
+              <div className="text-center py-12 text-muted-foreground">
+                {t("loading")}
+              </div>
+            ) : endingSoonAuctions.length === 0 ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground mb-4">{t("noActiveAuctions")}</p>
+                <Link href="/browse">
+                  <Button variant="outline">{t("browseAllListings")}</Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {endingSoonAuctions.map((listing) => (
+                  <ListingCard key={listing.id} listing={listing} />
+                ))}
+              </div>
+            )}
+          </div>
+        </section>
+
+        {/* Featured Listings Section */}
         <section className="py-12 md:py-16">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-8">
@@ -58,7 +111,7 @@ export default function Home() {
               </h2>
             </div>
 
-            {loading ? (
+            {loadingFeatured ? (
               <div className="text-center py-12 text-muted-foreground">
                 {t("loading")}
               </div>

@@ -225,6 +225,12 @@ const translations: Translations = {
   listingCancelled: { is: 'Auglýsingu afturkölluð', en: 'Listing Cancelled' },
   deleteError: { is: 'Villa kom upp við að eyða auglýsingu', en: 'Error deleting listing' },
   
+  // Homepage sections
+  featuredAuctions: { is: 'Uppboð að líða undir lok', en: 'Featured Auctions' },
+  showMore: { is: 'Sýna meira', en: 'Show More' },
+  noActiveAuctions: { is: 'Engin virk uppboð í augnablikinu', en: 'No active auctions at the moment' },
+  browseAllListings: { is: 'Skoða allar auglýsingar', en: 'Browse All Listings' },
+  
   // Common
   loading: { is: 'Hleður...', en: 'Loading...' },
   noResults: { is: 'Engar vörur fundust', en: 'No items found' },

@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label"
 import { getListings, Listing } from "@/lib/api"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { useEffect, useState, useCallback } from "react"
+import { useSearchParams } from "next/navigation"
 import { Search, SlidersHorizontal, X } from "lucide-react"
 
 export default function BrowsePage() {
   const { t } = useLanguage()
+  const searchParams = useSearchParams()
   const [listings, setListings] = useState<Listing[]>([])
   const [loading, setLoading] = useState(true)
   const [totalCount, setTotalCount] = useState(0)
@@ -21,6 +23,7 @@ export default function BrowsePage() {
   // Filter states
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
+  const [selectedListingType, setSelectedListingType] = useState(searchParams.get('listingType') || "")
   const [minPrice, setMinPrice] = useState("")
   const [maxPrice, setMaxPrice] = useState("")
   const [showFilters, setShowFilters] = useState(false)
@@ -42,6 +45,7 @@ export default function BrowsePage() {
     const result = await getListings({
       search: searchQuery || undefined,
       category: selectedCategory || undefined,
+      listingType: selectedListingType || undefined,
       minPrice: minPrice ? parseFloat(minPrice) : undefined,
       maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
       page: currentPage,
@@ -50,7 +54,7 @@ export default function BrowsePage() {
     setListings(result.listings)
     setTotalCount(result.totalCount)
     setLoading(false)
-  }, [currentPage, searchQuery, selectedCategory, minPrice, maxPrice])
+  }, [currentPage, searchQuery, selectedCategory, selectedListingType, minPrice, maxPrice])
 
   useEffect(() => {
     loadListings()
