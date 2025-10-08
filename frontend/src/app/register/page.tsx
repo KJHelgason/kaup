@@ -54,8 +54,8 @@ export default function RegisterPage() {
         phoneNumber: phoneNumber || undefined
       })
       router.push("/") // Redirect to homepage after successful registration
-    } catch (err: any) {
-      setError(err.message || t("registerError"))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("registerError"))
       setLoading(false)
     }
   }
@@ -85,8 +85,8 @@ export default function RegisterPage() {
         })
         
         router.push("/")
-      } catch (err: any) {
-        setError(err.message || 'Google sign-up failed')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Google sign-up failed')
         setGoogleLoading(false)
       }
     },

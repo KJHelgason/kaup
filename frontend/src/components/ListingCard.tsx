@@ -17,6 +17,7 @@ export function ListingCard({ listing }: ListingCardProps) {
         {/* Image Placeholder */}
         <div className="aspect-video bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center">
           {listing.imageUrls.length > 0 ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={listing.imageUrls[0]}
               alt={listing.title}

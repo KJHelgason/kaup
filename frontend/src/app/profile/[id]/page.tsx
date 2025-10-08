@@ -9,7 +9,7 @@ import { useLanguage } from "@/contexts/LanguageContext"
 import { useAuth } from "@/contexts/AuthContext"
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Star, MapPin, Phone, Mail, Calendar, Package, MessageSquare, Edit, User as UserIcon } from "lucide-react"
+import { Star, MapPin, Phone, Mail, Calendar, Package, MessageSquare, Edit } from "lucide-react"
 import Image from "next/image"
 
 export default function ProfilePage() {

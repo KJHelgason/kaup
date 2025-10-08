@@ -1,8 +1,7 @@
 "use client"
 
 import { useState, useRef } from 'react'
-import { Button } from '@/components/ui/button'
-import { X, Loader2, ImageIcon, Plus } from 'lucide-react'
+import { X, Loader2, Plus } from 'lucide-react'
 import Image from 'next/image'
 
 interface MultipleImageUploadProps {

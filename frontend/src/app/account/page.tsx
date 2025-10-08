@@ -74,8 +74,8 @@ export default function AccountPage() {
       setSuccess(true)
       
       setTimeout(() => setSuccess(false), 3000)
-    } catch (err: any) {
-      setError(err.message || t("updateError"))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("updateError"))
     } finally {
       setLoading(false)
     }

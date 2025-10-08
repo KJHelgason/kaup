@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { getListings, Listing } from "@/lib/api"
 import { useLanguage } from "@/contexts/LanguageContext"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import { Search, SlidersHorizontal, X } from "lucide-react"
 
 export default function BrowsePage() {
@@ -37,11 +37,7 @@ export default function BrowsePage() {
     "Annað" // Other
   ]
 
-  useEffect(() => {
-    loadListings()
-  }, [currentPage, searchQuery, selectedCategory, minPrice, maxPrice])
-
-  async function loadListings() {
+  const loadListings = useCallback(async () => {
     setLoading(true)
     const result = await getListings({
       search: searchQuery || undefined,
@@ -54,7 +50,11 @@ export default function BrowsePage() {
     setListings(result.listings)
     setTotalCount(result.totalCount)
     setLoading(false)
-  }
+  }, [currentPage, searchQuery, selectedCategory, minPrice, maxPrice])
+
+  useEffect(() => {
+    loadListings()
+  }, [loadListings])
 
   function handleSearch(e: React.FormEvent) {
     e.preventDefault()

@@ -32,8 +32,8 @@ export default function LoginPage() {
     try {
       await login(email, password)
       router.push("/") // Redirect to homepage after successful login
-    } catch (err: any) {
-      setError(err.message || t("loginError"))
+    } catch (err) {
+      setError(err instanceof Error ? err.message : t("loginError"))
       setLoading(false)
     }
   }
@@ -63,8 +63,8 @@ export default function LoginPage() {
         })
         
         router.push("/")
-      } catch (err: any) {
-        setError(err.message || 'Google sign-in failed')
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Google sign-in failed')
         setGoogleLoading(false)
       }
     },
