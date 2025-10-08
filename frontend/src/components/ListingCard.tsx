@@ -1,6 +1,7 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Listing } from "@/lib/api"
+import { AuctionTimer } from "@/components/AuctionTimer"
 import Link from "next/link"
 import { useLanguage } from "@/contexts/LanguageContext"
 
@@ -39,6 +40,13 @@ export function ListingCard({ listing }: ListingCardProps) {
         <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
           {listing.description}
         </p>
+        
+        {/* Auction Timer */}
+        {listing.listingType === 'Auction' && listing.endDate && (
+          <div className="mb-3">
+            <AuctionTimer endDate={listing.endDate} variant="compact" />
+          </div>
+        )}
         
         {/* Price and Bids */}
         <div className="flex items-baseline justify-between">

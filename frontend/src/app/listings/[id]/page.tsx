@@ -3,6 +3,7 @@
 import { Header } from "@/components/Header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { AuctionTimer } from "@/components/AuctionTimer"
 import { getListing, Listing, deleteListing } from "@/lib/api"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { useAuth } from "@/contexts/AuthContext"
@@ -229,6 +230,15 @@ export default function ListingDetailPage() {
                   </p>
                 )}
               </div>
+
+              {/* Auction Timer */}
+              {listing.listingType === 'Auction' && listing.endDate && (
+                <Card>
+                  <CardContent className="p-4">
+                    <AuctionTimer endDate={listing.endDate} variant="large" />
+                  </CardContent>
+                </Card>
+              )}
 
               {/* Metadata */}
               <div className="grid grid-cols-2 gap-4">
