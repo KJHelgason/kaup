@@ -32,14 +32,9 @@ export function ListingCard({ listing }: ListingCardProps) {
       
       <CardContent className="p-4">
         {/* Title */}
-        <h3 className="font-semibold text-lg line-clamp-1 mb-2">
+        <h3 className="font-semibold text-lg line-clamp-2 mb-3">
           {listing.title}
         </h3>
-        
-        {/* Description */}
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-          {listing.description}
-        </p>
         
         {/* Auction Timer */}
         {listing.listingType === 'Auction' && listing.endDate && (
