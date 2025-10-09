@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { LanguageProvider } from "@/contexts/LanguageContext";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { GoogleProvider } from "@/components/GoogleProvider";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -31,6 +32,7 @@ export default function RootLayout({
             <AuthProvider>
               <LanguageProvider>
                 {children}
+                <Toaster richColors position="top-right" />
               </LanguageProvider>
             </AuthProvider>
           </ThemeProvider>

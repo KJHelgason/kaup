@@ -78,19 +78,19 @@ export function AuctionTimer({ endDate, variant = 'default' }: AuctionTimerProps
   }
 
   if (variant === 'large') {
-    // Large version for listing detail page
+    // Large version for listing detail page - compact grid style
     return (
-      <div className="space-y-2">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <Clock className="w-4 h-4" />
+      <div className="space-y-1.5">
+        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Clock className="w-3.5 h-3.5" />
           <span className="font-medium">
             {language === 'is' ? 'Tími eftir' : 'Time Remaining'}
           </span>
         </div>
-        <div className="grid grid-cols-4 gap-2">
+        <div className={`grid ${timeLeft.days > 0 ? 'grid-cols-4' : 'grid-cols-3'} gap-2`}>
           {timeLeft.days > 0 && (
-            <div className="text-center">
-              <div className={`text-2xl font-bold ${urgencyColor}`}>
+            <div className="text-center bg-muted rounded-md py-1.5 px-2">
+              <div className={`text-lg font-bold ${urgencyColor}`}>
                 {timeLeft.days}
               </div>
               <div className="text-xs text-muted-foreground">
@@ -98,24 +98,24 @@ export function AuctionTimer({ endDate, variant = 'default' }: AuctionTimerProps
               </div>
             </div>
           )}
-          <div className="text-center">
-            <div className={`text-2xl font-bold ${urgencyColor}`}>
+          <div className="text-center bg-muted rounded-md py-1.5 px-2">
+            <div className={`text-lg font-bold ${urgencyColor}`}>
               {String(timeLeft.hours).padStart(2, '0')}
             </div>
             <div className="text-xs text-muted-foreground">
-              {language === 'is' ? 'klst' : 'hours'}
+              {language === 'is' ? 'klst' : 'hrs'}
             </div>
           </div>
-          <div className="text-center">
-            <div className={`text-2xl font-bold ${urgencyColor}`}>
+          <div className="text-center bg-muted rounded-md py-1.5 px-2">
+            <div className={`text-lg font-bold ${urgencyColor}`}>
               {String(timeLeft.minutes).padStart(2, '0')}
             </div>
             <div className="text-xs text-muted-foreground">
               {language === 'is' ? 'mín' : 'min'}
             </div>
           </div>
-          <div className="text-center">
-            <div className={`text-2xl font-bold ${urgencyColor}`}>
+          <div className="text-center bg-muted rounded-md py-1.5 px-2">
+            <div className={`text-lg font-bold ${urgencyColor}`}>
               {String(timeLeft.seconds).padStart(2, '0')}
             </div>
             <div className="text-xs text-muted-foreground">

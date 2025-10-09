@@ -13,6 +13,7 @@ public class Listing
     public ListingType ListingType { get; set; }
     public ListingStatus Status { get; set; } = ListingStatus.Active;
     public bool IsFeatured { get; set; }
+    public bool AcceptOffers { get; set; } = false;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? EndDate { get; set; }
     public DateTime? UpdatedAt { get; set; }

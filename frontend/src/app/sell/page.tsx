@@ -37,6 +37,7 @@ export default function SellPage() {
   const [listingType, setListingType] = useState("Auction")
   const [endDate, setEndDate] = useState("")
   const [imageUrls, setImageUrls] = useState<string[]>([])
+  const [acceptOffers, setAcceptOffers] = useState(false)
 
   const categories = [
     "Rafeindatækni",
@@ -101,6 +102,7 @@ export default function SellPage() {
         imageUrls: imageUrls,
         listingType: listingType,
         isFeatured: false,
+        acceptOffers: acceptOffers,
         endDate: endDate ? new Date(endDate).toISOString() : undefined,
         sellerId: user.id
       })
@@ -244,6 +246,20 @@ export default function SellPage() {
                       <span>{t("buyNowOnly")}</span>
                     </label>
                   </div>
+                </div>
+
+                {/* Accept Best Offer */}
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    id="acceptOffers"
+                    checked={acceptOffers}
+                    onChange={(e) => setAcceptOffers(e.target.checked)}
+                    className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+                  />
+                  <Label htmlFor="acceptOffers" className="font-normal cursor-pointer">
+                    {t("acceptBestOffer")}
+                  </Label>
                 </div>
 
                 {/* Price */}

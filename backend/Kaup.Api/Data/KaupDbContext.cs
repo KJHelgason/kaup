@@ -14,6 +14,10 @@ public class KaupDbContext : DbContext
     public DbSet<Bid> Bids { get; set; }
     public DbSet<Message> Messages { get; set; }
     public DbSet<Review> Reviews { get; set; }
+    public DbSet<Offer> Offers { get; set; }
+    public DbSet<Notification> Notifications { get; set; }
+    public DbSet<Watchlist> Watchlists { get; set; }
+    public DbSet<CartItem> CartItems { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -105,6 +109,92 @@ public class KaupDbContext : DbContext
                 .WithMany()
                 .HasForeignKey(e => e.ListingId)
                 .OnDelete(DeleteBehavior.SetNull);
+        });
+
+        // Offer configuration
+        modelBuilder.Entity<Offer>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Amount).HasColumnType("decimal(18,2)");
+            entity.Property(e => e.Message).HasMaxLength(500);
+            
+            entity.HasOne(e => e.Listing)
+                .WithMany()
+                .HasForeignKey(e => e.ListingId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Buyer)
+                .WithMany()
+                .HasForeignKey(e => e.BuyerId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(e => e.Seller)
+                .WithMany()
+                .HasForeignKey(e => e.SellerId)
+                .OnDelete(DeleteBehavior.Restrict);
+            
+            entity.HasOne(e => e.ParentOffer)
+                .WithMany(o => o.CounterOffers)
+                .HasForeignKey(e => e.ParentOfferId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Notification configuration
+        modelBuilder.Entity<Notification>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.Title).IsRequired().HasMaxLength(200);
+            entity.Property(e => e.Message).IsRequired().HasMaxLength(500);
+            entity.Property(e => e.LinkUrl).HasMaxLength(500);
+            entity.Property(e => e.RelatedEntityId).HasMaxLength(100);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasIndex(e => new { e.UserId, e.IsRead });
+            entity.HasIndex(e => e.CreatedAt);
+        });
+
+        // Watchlist configuration
+        modelBuilder.Entity<Watchlist>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Listing)
+                .WithMany()
+                .HasForeignKey(e => e.ListingId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            // Prevent duplicate watchlist entries
+            entity.HasIndex(e => new { e.UserId, e.ListingId }).IsUnique();
+            entity.HasIndex(e => e.CreatedAt);
+        });
+
+        // CartItem configuration
+        modelBuilder.Entity<CartItem>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            entity.HasOne(e => e.User)
+                .WithMany()
+                .HasForeignKey(e => e.UserId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Listing)
+                .WithMany()
+                .HasForeignKey(e => e.ListingId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            // Prevent duplicate cart entries
+            entity.HasIndex(e => new { e.UserId, e.ListingId }).IsUnique();
+            entity.HasIndex(e => e.CreatedAt);
         });
     }
 }

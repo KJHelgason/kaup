@@ -12,6 +12,7 @@ export interface Listing {
   listingType: string
   status: string
   isFeatured: boolean
+  acceptOffers: boolean
   createdAt: string
   endDate?: string
   seller: {
@@ -145,6 +146,7 @@ export async function createListing(listing: {
   imageUrls: string[]
   listingType: string
   isFeatured: boolean
+  acceptOffers: boolean
   endDate?: string
   sellerId: string
 }): Promise<Listing | null> {
@@ -202,6 +204,161 @@ export async function deleteListing(listingId: string, sellerId: string): Promis
   }
 }
 
+export async function toggleFeaturedListing(listingId: string, isFeatured: boolean): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      throw new Error('Not authenticated')
+    }
+
+    const response = await fetch(`${API_URL}/listings/${listingId}/featured`, {
+      method: 'PATCH',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ isFeatured }),
+    })
+    
+    if (!response.ok) {
+      throw new Error(`Failed to toggle featured status: ${response.statusText}`)
+    }
+    
+    return true
+  } catch (error) {
+    console.error('Error toggling featured status:', error)
+    throw error
+  }
+}
+
+// Watchlist Functions
+export interface WatchlistItem {
+  id: string
+  listingId: string
+  listingTitle: string
+  listingPrice: number
+  listingImageUrl?: string
+  listingStatus: string
+  listingType: string
+  endDate?: string
+  bidCount: number
+  sellerName: string
+  addedAt: string
+}
+
+export async function getWatchlist(): Promise<WatchlistItem[]> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return []
+    }
+
+    const response = await fetch(`${API_URL}/watchlist`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (response.ok) {
+      return await response.json()
+    }
+    return []
+  } catch (error) {
+    console.error('Error fetching watchlist:', error)
+    return []
+  }
+}
+
+export async function addToWatchlist(listingId: string): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      throw new Error('Not authenticated')
+    }
+
+    const response = await fetch(`${API_URL}/watchlist/${listingId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to add to watchlist')
+    }
+    
+    return true
+  } catch (error) {
+    console.error('Error adding to watchlist:', error)
+    throw error
+  }
+}
+
+export async function removeFromWatchlist(listingId: string): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      throw new Error('Not authenticated')
+    }
+
+    const response = await fetch(`${API_URL}/watchlist/${listingId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to remove from watchlist')
+    }
+    
+    return true
+  } catch (error) {
+    console.error('Error removing from watchlist:', error)
+    throw error
+  }
+}
+
+export async function isInWatchlist(listingId: string): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return false
+    }
+
+    const response = await fetch(`${API_URL}/watchlist/check/${listingId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+    })
+    
+    if (!response.ok) {
+      return false
+    }
+    
+    return response.json()
+  } catch (error) {
+    console.error('Error checking watchlist:', error)
+    return false
+  }
+}
+
+export async function getWatchlistCount(listingId: string): Promise<number> {
+  try {
+    const response = await fetch(`${API_URL}/watchlist/count/${listingId}`)
+    
+    if (!response.ok) {
+      return 0
+    }
+    
+    return response.json()
+  } catch (error) {
+    console.error('Error getting watchlist count:', error)
+    return 0
+  }
+}
+
 // Auth Types
 export interface User {
   id: string
@@ -217,6 +374,7 @@ export interface User {
   averageRating: number
   totalRatings: number
   totalSales: number
+  isAdmin: boolean
   createdAt: string
 }
 
@@ -426,3 +584,506 @@ export async function updateProfile(userId: string, data: {
     return null
   }
 }
+
+// Offers API
+export interface Offer {
+  id: string
+  listingId: string
+  listingTitle: string
+  listingPrice: number
+  buyerId: string
+  buyerName: string
+  sellerId: string
+  sellerName: string
+  amount: number
+  message?: string
+  status: string // Pending, Accepted, Declined, Countered, Expired, Withdrawn
+  parentOfferId?: string
+  expiresAt: string
+  createdAt: string
+  respondedAt?: string
+}
+
+export async function createOffer(
+  listingId: string,
+  amount: number,
+  message?: string
+): Promise<Offer | null> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      throw new Error('Not authenticated')
+    }
+
+    const response = await fetch(`${API_URL}/offers`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        listingId,
+        amount,
+        message,
+      }),
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to create offer')
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error creating offer:', error)
+    throw error
+  }
+}
+
+export async function getMyOffers(type: 'sent' | 'received'): Promise<Offer[]> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return []
+    }
+
+    const response = await fetch(`${API_URL}/offers/my-offers?type=${type}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!response.ok) {
+      return []
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching offers:', error)
+    return []
+  }
+}
+
+export async function respondToOffer(
+  offerId: string,
+  action: 'accept' | 'decline' | 'counter',
+  counterAmount?: number,
+  counterMessage?: string
+): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      throw new Error('Not authenticated')
+    }
+
+    const response = await fetch(`${API_URL}/offers/${offerId}/respond`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        action,
+        counterAmount,
+        counterMessage,
+      }),
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to respond to offer')
+    }
+    
+    return true
+  } catch (error) {
+    console.error('Error responding to offer:', error)
+    throw error
+  }
+}
+
+export async function withdrawOffer(offerId: string): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      throw new Error('Not authenticated')
+    }
+
+    const response = await fetch(`${API_URL}/offers/${offerId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.message || 'Failed to withdraw offer')
+    }
+    
+    return true
+  } catch (error) {
+    console.error('Error withdrawing offer:', error)
+    throw error
+  }
+}
+
+// Notifications API
+export interface Notification {
+  id: string
+  userId: string
+  type: string
+  title: string
+  message: string
+  linkUrl?: string
+  relatedEntityId?: string
+  isRead: boolean
+  createdAt: string
+}
+
+export async function getNotifications(unreadOnly: boolean = false): Promise<Notification[]> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return []
+    }
+
+    const response = await fetch(`${API_URL}/notifications?unreadOnly=${unreadOnly}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!response.ok) {
+      return []
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching notifications:', error)
+    return []
+  }
+}
+
+export async function getUnreadNotificationCount(): Promise<number> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return 0
+    }
+
+    const response = await fetch(`${API_URL}/notifications/unread-count`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!response.ok) {
+      return 0
+    }
+    
+    const count = await response.json()
+    return typeof count === 'number' ? count : (count.count || 0)
+  } catch (error) {
+    console.error('Error fetching unread count:', error)
+    return 0
+  }
+}
+
+export async function markNotificationAsRead(notificationId: string): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return false
+    }
+
+    const response = await fetch(`${API_URL}/notifications/mark-read`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ notificationIds: [notificationId] }),
+    })
+    
+    return response.ok
+  } catch (error) {
+    console.error('Error marking notification as read:', error)
+    return false
+  }
+}
+
+export async function markAllNotificationsAsRead(): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return false
+    }
+
+    const response = await fetch(`${API_URL}/notifications/mark-all-read`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    return response.ok
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error)
+    return false
+  }
+}
+
+// ==================== BIDDING ====================
+
+export interface Bid {
+  id: string
+  amount: number
+  createdAt: string
+  listingId: string
+  bidder: {
+    id: string
+    firstName: string
+    lastName: string
+    profileImageUrl?: string
+  }
+}
+
+export async function getBidsByListing(listingId: string): Promise<Bid[]> {
+  try {
+    const response = await fetch(`${API_URL}/bids/listing/${listingId}`)
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch bids')
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching bids:', error)
+    return []
+  }
+}
+
+export async function getMyBids(): Promise<Bid[]> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return []
+    }
+
+    const response = await fetch(`${API_URL}/bids/user/my-bids`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch my bids')
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching my bids:', error)
+    return []
+  }
+}
+
+export async function placeBid(listingId: string, amount: number): Promise<{ success: boolean; bid?: Bid; error?: string }> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return { success: false, error: 'Not authenticated' }
+    }
+
+    const response = await fetch(`${API_URL}/bids`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({
+        listingId,
+        amount,
+      }),
+    })
+    
+    const data = await response.json()
+    
+    if (!response.ok) {
+      return { success: false, error: data.message || 'Failed to place bid' }
+    }
+    
+    return { success: true, bid: data }
+  } catch (error) {
+    console.error('Error placing bid:', error)
+    return { success: false, error: 'Network error' }
+  }
+}
+
+export async function retractBid(bidId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return { success: false, error: 'Not authenticated' }
+    }
+
+    const response = await fetch(`${API_URL}/bids/${bidId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!response.ok) {
+      const data = await response.json()
+      return { success: false, error: data.message || 'Failed to retract bid' }
+    }
+    
+    return { success: true }
+  } catch (error) {
+    console.error('Error retracting bid:', error)
+    return { success: false, error: 'Network error' }
+  }
+}
+
+// ==================== CART ====================
+
+export interface CartItem {
+  id: string
+  listingId: string
+  listingTitle: string
+  listingPrice: number
+  listingImageUrl?: string
+  listingStatus: string
+  sellerName: string
+  sellerId: string
+  addedAt: string
+}
+
+export async function getCart(): Promise<CartItem[]> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return []
+    }
+
+    const response = await fetch(`${API_URL}/cart`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!response.ok) {
+      throw new Error('Failed to fetch cart')
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching cart:', error)
+    return []
+  }
+}
+
+export async function getCartCount(): Promise<number> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return 0
+    }
+
+    const response = await fetch(`${API_URL}/cart/count`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!response.ok) {
+      return 0
+    }
+    
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching cart count:', error)
+    return 0
+  }
+}
+
+export async function addToCart(listingId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return { success: false, error: 'Not authenticated' }
+    }
+
+    const response = await fetch(`${API_URL}/cart`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ listingId }),
+    })
+    
+    if (!response.ok) {
+      const data = await response.json()
+      return { success: false, error: data.message || 'Failed to add to cart' }
+    }
+    
+    return { success: true }
+  } catch (error) {
+    console.error('Error adding to cart:', error)
+    return { success: false, error: 'Network error' }
+  }
+}
+
+export async function removeFromCart(cartItemId: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return { success: false, error: 'Not authenticated' }
+    }
+
+    const response = await fetch(`${API_URL}/cart/${cartItemId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!response.ok) {
+      const data = await response.json()
+      return { success: false, error: data.message || 'Failed to remove from cart' }
+    }
+    
+    return { success: true }
+  } catch (error) {
+    console.error('Error removing from cart:', error)
+    return { success: false, error: 'Network error' }
+  }
+}
+
+export async function clearCart(): Promise<{ success: boolean; error?: string }> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return { success: false, error: 'Not authenticated' }
+    }
+
+    const response = await fetch(`${API_URL}/cart/clear`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!response.ok) {
+      const data = await response.json()
+      return { success: false, error: data.message || 'Failed to clear cart' }
+    }
+    
+    return { success: true }
+  } catch (error) {
+    console.error('Error clearing cart:', error)
+    return { success: false, error: 'Network error' }
+  }
+}
+

@@ -13,6 +13,7 @@ public class ListingDto
     public string ListingType { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public bool IsFeatured { get; set; }
+    public bool AcceptOffers { get; set; }
     public DateTime CreatedAt { get; set; }
     public DateTime? EndDate { get; set; }
     public SellerDto Seller { get; set; } = null!;
@@ -39,6 +40,7 @@ public class CreateListingDto
     public string[] ImageUrls { get; set; } = Array.Empty<string>();
     public string ListingType { get; set; } = string.Empty;
     public bool IsFeatured { get; set; }
+    public bool AcceptOffers { get; set; }
     public DateTime? EndDate { get; set; }
     public Guid SellerId { get; set; }
 }
@@ -53,4 +55,9 @@ public class UpdateListingDto
     public string? Condition { get; set; }
     public string[]? ImageUrls { get; set; }
     public string? Status { get; set; }
+}
+
+public class ToggleFeaturedDto
+{
+    public bool IsFeatured { get; set; }
 }

@@ -5,6 +5,9 @@ using Kaup.Api.Models;
 using Kaup.Api.DTOs;
 using System.Security.Cryptography;
 using System.Text;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
+using Microsoft.IdentityModel.Tokens;
 
 namespace Kaup.Api.Controllers;
 
@@ -13,10 +16,12 @@ namespace Kaup.Api.Controllers;
 public class AuthController : ControllerBase
 {
     private readonly KaupDbContext _context;
+    private readonly IConfiguration _configuration;
 
-    public AuthController(KaupDbContext context)
+    public AuthController(KaupDbContext context, IConfiguration configuration)
     {
         _context = context;
+        _configuration = configuration;
     }
 
     [HttpPost("register")]
@@ -54,9 +59,8 @@ public class AuthController : ControllerBase
         _context.Users.Add(user);
         await _context.SaveChangesAsync();
 
-        // For now, we'll return a simple token (user ID)
-        // In production, use JWT tokens
-        var token = user.Id.ToString();
+        // Generate JWT token
+        var token = GenerateJwtToken(user);
 
         var userDto = new UserDto
         {
@@ -73,6 +77,7 @@ public class AuthController : ControllerBase
             AverageRating = user.AverageRating,
             TotalRatings = user.TotalRatings,
             TotalSales = user.TotalSales,
+            IsAdmin = user.IsAdmin,
             CreatedAt = user.CreatedAt
         };
 
@@ -105,9 +110,8 @@ public class AuthController : ControllerBase
             return Unauthorized("Invalid email or password");
         }
 
-        // For now, we'll return a simple token (user ID)
-        // In production, use JWT tokens
-        var token = user.Id.ToString();
+        // Generate JWT token
+        var token = GenerateJwtToken(user);
 
         var userDto = new UserDto
         {
@@ -124,6 +128,7 @@ public class AuthController : ControllerBase
             AverageRating = user.AverageRating,
             TotalRatings = user.TotalRatings,
             TotalSales = user.TotalSales,
+            IsAdmin = user.IsAdmin,
             CreatedAt = user.CreatedAt
         };
 
@@ -207,8 +212,8 @@ public class AuthController : ControllerBase
             }
         }
 
-        // Generate token
-        var token = user.Id.ToString();
+        // Generate JWT token
+        var token = GenerateJwtToken(user);
 
         var userDto = new UserDto
         {
@@ -225,6 +230,7 @@ public class AuthController : ControllerBase
             AverageRating = user.AverageRating,
             TotalRatings = user.TotalRatings,
             TotalSales = user.TotalSales,
+            IsAdmin = user.IsAdmin,
             CreatedAt = user.CreatedAt
         };
 
@@ -233,5 +239,30 @@ public class AuthController : ControllerBase
             Token = token,
             User = userDto
         });
+    }
+
+    private string GenerateJwtToken(User user)
+    {
+        var jwtSecret = _configuration["Jwt:Secret"] ?? "your-super-secret-key-change-this-in-production-min-32-chars";
+        var key = Encoding.ASCII.GetBytes(jwtSecret);
+
+        var tokenDescriptor = new SecurityTokenDescriptor
+        {
+            Subject = new ClaimsIdentity(new[]
+            {
+                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimTypes.Name, $"{user.FirstName} {user.LastName}"),
+                new Claim(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User")
+            }),
+            Expires = DateTime.UtcNow.AddDays(7),
+            SigningCredentials = new SigningCredentials(
+                new SymmetricSecurityKey(key),
+                SecurityAlgorithms.HmacSha256Signature)
+        };
+
+        var tokenHandler = new JwtSecurityTokenHandler();
+        var token = tokenHandler.CreateToken(tokenDescriptor);
+        return tokenHandler.WriteToken(token);
     }
 }

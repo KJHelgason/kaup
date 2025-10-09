@@ -16,7 +16,7 @@ import { ImageUpload } from "@/components/ImageUpload"
 
 export default function AccountPage() {
   const { t } = useLanguage()
-  const { user, setUser } = useAuth()
+  const { user, setUser, loading: authLoading } = useAuth()
   const router = useRouter()
   
   const [formData, setFormData] = useState({
@@ -34,22 +34,24 @@ export default function AccountPage() {
   const [success, setSuccess] = useState(false)
 
   useEffect(() => {
-    if (!user) {
+    if (!authLoading && !user) {
       router.push("/login")
       return
     }
 
-    setFormData({
-      firstName: user.firstName,
-      lastName: user.lastName,
-      phoneNumber: user.phoneNumber || "",
-      bio: user.bio || "",
-      address: user.address || "",
-      city: user.city || "",
-      postalCode: user.postalCode || ""
-    })
-    setProfileImageUrl(user.profileImageUrl || "")
-  }, [user, router])
+    if (user) {
+      setFormData({
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber || "",
+        bio: user.bio || "",
+        address: user.address || "",
+        city: user.city || "",
+        postalCode: user.postalCode || ""
+      })
+      setProfileImageUrl(user.profileImageUrl || "")
+    }
+  }, [authLoading, user, router])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

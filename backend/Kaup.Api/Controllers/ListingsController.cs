@@ -75,6 +75,7 @@ public class ListingsController : ControllerBase
                 ListingType = l.ListingType.ToString(),
                 Status = l.Status.ToString(),
                 IsFeatured = l.IsFeatured,
+                AcceptOffers = l.AcceptOffers,
                 CreatedAt = l.CreatedAt,
                 EndDate = l.EndDate,
                 Seller = new SellerDto
@@ -120,6 +121,7 @@ public class ListingsController : ControllerBase
             ListingType = listing.ListingType.ToString(),
             Status = listing.Status.ToString(),
             IsFeatured = listing.IsFeatured,
+            AcceptOffers = listing.AcceptOffers,
             CreatedAt = listing.CreatedAt,
             EndDate = listing.EndDate,
             Seller = new SellerDto
@@ -157,6 +159,7 @@ public class ListingsController : ControllerBase
             ImageUrls = createDto.ImageUrls,
             ListingType = Enum.Parse<ListingType>(createDto.ListingType),
             IsFeatured = createDto.IsFeatured,
+            AcceptOffers = createDto.AcceptOffers,
             EndDate = createDto.EndDate,
             SellerId = seller.Id,
             Status = ListingStatus.Active
@@ -178,6 +181,7 @@ public class ListingsController : ControllerBase
             ListingType = listing.ListingType.ToString(),
             Status = listing.Status.ToString(),
             IsFeatured = listing.IsFeatured,
+            AcceptOffers = listing.AcceptOffers,
             CreatedAt = listing.CreatedAt,
             EndDate = listing.EndDate,
             Seller = new SellerDto
@@ -279,6 +283,25 @@ public class ListingsController : ControllerBase
         return Ok(new { message = "Listing deleted successfully", deleted = true });
     }
 
+    [HttpPatch("{id}/featured")]
+    public async Task<IActionResult> ToggleFeatured(Guid id, [FromBody] ToggleFeaturedDto dto)
+    {
+        var listing = await _context.Listings.FindAsync(id);
+        if (listing == null)
+            return NotFound(new { message = "Listing not found" });
+
+        listing.IsFeatured = dto.IsFeatured;
+        listing.UpdatedAt = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new 
+        { 
+            message = $"Listing {(dto.IsFeatured ? "marked as featured" : "removed from featured")}",
+            isFeatured = listing.IsFeatured 
+        });
+    }
+
     [HttpGet("featured")]
     public async Task<ActionResult<IEnumerable<ListingDto>>> GetFeaturedListings([FromQuery] int count = 10)
     {
@@ -303,6 +326,7 @@ public class ListingsController : ControllerBase
                 ListingType = l.ListingType.ToString(),
                 Status = l.Status.ToString(),
                 IsFeatured = l.IsFeatured,
+                AcceptOffers = l.AcceptOffers,
                 CreatedAt = l.CreatedAt,
                 EndDate = l.EndDate,
                 Seller = new SellerDto
@@ -349,6 +373,7 @@ public class ListingsController : ControllerBase
                 ListingType = l.ListingType.ToString(),
                 Status = l.Status.ToString(),
                 IsFeatured = l.IsFeatured,
+                AcceptOffers = l.AcceptOffers,
                 CreatedAt = l.CreatedAt,
                 EndDate = l.EndDate,
                 Seller = new SellerDto

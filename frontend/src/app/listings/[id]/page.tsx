@@ -4,14 +4,15 @@ import { Header } from "@/components/Header"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { AuctionTimer } from "@/components/AuctionTimer"
-import { getListing, Listing, deleteListing } from "@/lib/api"
+import { getListing, Listing, deleteListing, createOffer, toggleFeaturedListing, addToWatchlist, removeFromWatchlist, isInWatchlist, getWatchlistCount, getBidsByListing, placeBid, Bid, addToCart } from "@/lib/api"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { useAuth } from "@/contexts/AuthContext"
 import { useEffect, useState } from "react"
 import { useParams, useRouter } from "next/navigation"
-import { Calendar, Package, User, Tag, ChevronLeft, ChevronRight, Trash2 } from "lucide-react"
+import { Calendar, Package, User, Tag, ChevronLeft, ChevronRight, Trash2, Star, Heart, ShoppingCart } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { toast } from "sonner"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -23,6 +24,22 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@/components/ui/tabs"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export default function ListingDetailPage() {
   const { t } = useLanguage()
@@ -36,8 +53,37 @@ export default function ListingDetailPage() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+  
+  // Offer modal state
+  const [isOfferModalOpen, setIsOfferModalOpen] = useState(false)
+  const [offerAmount, setOfferAmount] = useState("")
+  const [offerMessage, setOfferMessage] = useState("")
+  const [isSubmittingOffer, setIsSubmittingOffer] = useState(false)
+  const [offerError, setOfferError] = useState<string | null>(null)
+  const [offerSuccess, setOfferSuccess] = useState(false)
+  
+  // Feature toggle state
+  const [isTogglingFeatured, setIsTogglingFeatured] = useState(false)
+  
+  // Watchlist state
+  const [inWatchlist, setInWatchlist] = useState(false)
+  const [watchlistCount, setWatchlistCount] = useState(0)
+  const [isTogglingWatchlist, setIsTogglingWatchlist] = useState(false)
+
+  // Bid state
+  const [isBidModalOpen, setIsBidModalOpen] = useState(false)
+  const [bidAmount, setBidAmount] = useState("")
+  const [isSubmittingBid, setIsSubmittingBid] = useState(false)
+  const [bidError, setBidError] = useState<string | null>(null)
+  const [bidSuccess, setBidSuccess] = useState(false)
+  const [bids, setBids] = useState<Bid[]>([])
+  const [loadingBids, setLoadingBids] = useState(false)
+
+  // Cart state
+  const [isAddingToCart, setIsAddingToCart] = useState(false)
 
   const isOwner = user && listing && user.id === listing.seller.id
+  const isAdmin = user?.isAdmin || false
 
   useEffect(() => {
     async function loadListing() {
@@ -47,6 +93,35 @@ export default function ListingDetailPage() {
     }
     loadListing()
   }, [listingId])
+
+  useEffect(() => {
+    async function loadWatchlistData() {
+      if (listingId) {
+        // Get watchlist count (public)
+        const count = await getWatchlistCount(listingId)
+        setWatchlistCount(count)
+
+        // Check if current user has it in watchlist (requires auth)
+        if (user) {
+          const inList = await isInWatchlist(listingId)
+          setInWatchlist(inList)
+        }
+      }
+    }
+    loadWatchlistData()
+  }, [listingId, user])
+
+  useEffect(() => {
+    async function loadBids() {
+      if (listingId && listing?.listingType === 'Auction') {
+        setLoadingBids(true)
+        const bidData = await getBidsByListing(listingId)
+        setBids(bidData)
+        setLoadingBids(false)
+      }
+    }
+    loadBids()
+  }, [listingId, listing?.listingType])
 
   const nextImage = () => {
     if (listing && listing.imageUrls.length > 0) {
@@ -75,6 +150,154 @@ export default function ListingDetailPage() {
       setDeleteError(result.message || t('deleteError'))
       setIsDeleting(false)
     }
+  }
+
+  const handleSubmitOffer = async () => {
+    if (!listing || !user) return
+
+    setOfferError(null)
+    const amount = parseFloat(offerAmount)
+
+    // Validation
+    if (!amount || amount <= 0) {
+      setOfferError(t("offerTooLow"))
+      return
+    }
+
+    if (amount >= listing.price) {
+      setOfferError(t("offerTooHigh"))
+      return
+    }
+
+    setIsSubmittingOffer(true)
+
+    try {
+      await createOffer(listing.id, amount, offerMessage || undefined)
+      setOfferSuccess(true)
+      setOfferAmount("")
+      setOfferMessage("")
+      
+      // Close modal after 2 seconds
+      setTimeout(() => {
+        setIsOfferModalOpen(false)
+        setOfferSuccess(false)
+      }, 2000)
+    } catch (error: any) {
+      setOfferError(error.message || t("offerError"))
+    } finally {
+      setIsSubmittingOffer(false)
+    }
+  }
+
+  const handleToggleFeatured = async () => {
+    if (!listing || !isAdmin) return
+
+    setIsTogglingFeatured(true)
+
+    try {
+      await toggleFeaturedListing(listing.id, !listing.isFeatured)
+      // Update local state
+      setListing({ ...listing, isFeatured: !listing.isFeatured })
+    } catch (error) {
+      console.error('Error toggling featured status:', error)
+    } finally {
+      setIsTogglingFeatured(false)
+    }
+  }
+
+  const handleToggleWatchlist = async () => {
+    if (!listing || !user) return
+
+    setIsTogglingWatchlist(true)
+
+    try {
+      if (inWatchlist) {
+        await removeFromWatchlist(listing.id)
+        setInWatchlist(false)
+        setWatchlistCount(prev => Math.max(0, prev - 1))
+      } else {
+        await addToWatchlist(listing.id)
+        setInWatchlist(true)
+        setWatchlistCount(prev => prev + 1)
+      }
+    } catch (error) {
+      console.error('Error toggling watchlist:', error)
+    } finally {
+      setIsTogglingWatchlist(false)
+    }
+  }
+
+  const handleSubmitBid = async () => {
+    if (!listing || !user) return
+
+    setBidError(null)
+    const amount = parseFloat(bidAmount)
+
+    // Validation
+    if (!amount || amount <= 0) {
+      setBidError(t("bidTooLow"))
+      return
+    }
+
+    const currentHighest = listing.highestBid || listing.price
+    if (amount <= currentHighest) {
+      setBidError(`${t("bidMustBeHigher")} ${currentHighest.toLocaleString('is-IS')} ${t("currency")}`)
+      return
+    }
+
+    setIsSubmittingBid(true)
+
+    const result = await placeBid(listing.id, amount)
+
+    if (result.success && result.bid) {
+      // Success!
+      setBidSuccess(true)
+      setBidAmount("")
+      
+      // Update listing with new bid data
+      setListing({
+        ...listing,
+        bidCount: listing.bidCount + 1,
+        highestBid: amount
+      })
+
+      // Add new bid to the list
+      setBids([result.bid, ...bids])
+      
+      // Close modal after 2 seconds
+      setTimeout(() => {
+        setIsBidModalOpen(false)
+        setBidSuccess(false)
+      }, 2000)
+    } else {
+      setBidError(result.error || t("bidError"))
+    }
+
+    setIsSubmittingBid(false)
+  }
+
+  const handleAddToCart = async () => {
+    if (!listing || !user) return
+
+    setIsAddingToCart(true)
+
+    const result = await addToCart(listing.id)
+
+    if (result.success) {
+      toast.success(t("addedToCart"), {
+        description: listing.title,
+        action: {
+          label: t("cart"),
+          onClick: () => router.push('/cart')
+        }
+      })
+      // Trigger a storage event to update header cart count
+      window.dispatchEvent(new Event('cart-updated'))
+    } else {
+      toast.error(result.error || t("addToCartError"))
+    }
+
+    setIsAddingToCart(false)
   }
 
   const getDeleteMessage = () => {
@@ -139,7 +362,7 @@ export default function ListingDetailPage() {
             {/* Image Gallery */}
             <div className="space-y-4">
               {/* Main Image */}
-              <Card>
+              <Card className="p-0">
                 <CardContent className="p-0">
                   <div className="aspect-square bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center rounded-lg overflow-hidden relative">
                     {listing.imageUrls.length > 0 ? (
@@ -151,6 +374,26 @@ export default function ListingDetailPage() {
                           className="object-cover"
                           unoptimized
                         />
+                        
+                        {/* Watchlist Heart with Count - Top Right */}
+                        {user && (
+                          <button
+                            type="button"
+                            onClick={handleToggleWatchlist}
+                            disabled={isTogglingWatchlist}
+                            className="absolute top-4 right-4 flex items-center gap-2 bg-background/90 backdrop-blur-sm px-3 py-2 rounded-full shadow-lg hover:bg-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <span className="text-sm font-medium text-muted-foreground">
+                              {watchlistCount}
+                            </span>
+                            <Heart 
+                              className={`h-5 w-5 transition-colors ${
+                                inWatchlist ? 'fill-red-500 text-red-500' : 'text-muted-foreground hover:text-red-500'
+                              }`}
+                            />
+                          </button>
+                        )}
+
                         {/* Navigation Arrows */}
                         {listing.imageUrls.length > 1 && (
                           <>
@@ -215,108 +458,205 @@ export default function ListingDetailPage() {
 
             {/* Listing Details */}
             <div className="space-y-6">
-              {/* Title and Price */}
+              {/* Title */}
               <div>
-                <h1 className="text-3xl font-bold mb-2">{listing.title}</h1>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-4xl font-bold text-primary">
-                    {listing.price.toLocaleString('is-IS')}
-                  </span>
-                  <span className="text-lg text-muted-foreground">{t("currency")}</span>
-                </div>
-                {listing.buyNowPrice && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {t("buyNowPrice")}: {listing.buyNowPrice.toLocaleString('is-IS')} {t("currency")}
-                  </p>
-                )}
+                <h1 className="text-2xl font-bold mb-3">{listing.title}</h1>
+                <div className="border-b"></div>
               </div>
 
-              {/* Auction Timer */}
-              {listing.listingType === 'Auction' && listing.endDate && (
-                <Card>
-                  <CardContent className="p-4">
-                    <AuctionTimer endDate={listing.endDate} variant="large" />
-                  </CardContent>
-                </Card>
-              )}
+              {/* Seller Info - eBay Style */}
+              <div className="flex items-start gap-3">
+                {/* Seller Avatar */}
+                <Link 
+                  href={`/profile/${listing.seller.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {listing.seller.profileImageUrl ? (
+                    <Image
+                      src={listing.seller.profileImageUrl}
+                      alt={`${listing.seller.firstName} ${listing.seller.lastName}`}
+                      width={48}
+                      height={48}
+                      className="rounded-full"
+                      unoptimized
+                    />
+                  ) : (
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                      <User className="w-6 h-6 text-muted-foreground" />
+                    </div>
+                  )}
+                </Link>
 
-              {/* Metadata */}
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex items-center gap-2 text-sm">
-                  <Tag className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-muted-foreground">{t("category")}</p>
-                    <p className="font-medium">{t(listing.category)}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Package className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-muted-foreground">{t("condition")}</p>
-                    <p className="font-medium">{listing.condition}</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <User className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-muted-foreground">{t("seller")}</p>
+                {/* Seller Details */}
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
                     <Link 
                       href={`/profile/${listing.seller.id}`}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="font-medium hover:text-primary hover:underline transition-colors"
+                      className="font-semibold hover:underline"
                     >
                       {listing.seller.firstName} {listing.seller.lastName}
                     </Link>
+                    <span className="text-sm text-muted-foreground">(0)</span>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-muted-foreground">{t("listed")}</p>
-                    <p className="font-medium">
-                      {new Date(listing.createdAt).toLocaleDateString('is-IS')}
-                    </p>
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
+                    <Link 
+                      href={`/profile/${listing.seller.id}?tab=feedback`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-green-600 font-medium underline"
+                    >
+                      100% {t("positive")}
+                    </Link>
+                    <span>•</span>
+                    <Link 
+                      href={`/profile/${listing.seller.id}?tab=listings`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      {t("sellerOtherItems")}
+                    </Link>
+                    <span>•</span>
+                    <Link 
+                      href={`/profile/${listing.seller.id}?tab=contact`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline"
+                    >
+                      {t("contactSeller")}
+                    </Link>
                   </div>
                 </div>
               </div>
 
-              {/* Bidding Info */}
-              {listing.listingType === "Auction" && !isOwner && (
-                <Card className="bg-muted/50">
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center mb-2">
-                      <span className="text-sm text-muted-foreground">{t("currentBid")}</span>
-                      <span className="font-bold">
-                        {listing.highestBid 
-                          ? `${listing.highestBid.toLocaleString('is-IS')} ${t("currency")}`
-                          : t("noBids")
-                        }
-                      </span>
-                    </div>
-                    <div className="flex justify-between items-center mb-4">
-                      <span className="text-sm text-muted-foreground">{t("totalBids")}</span>
-                      <span className="font-medium">{listing.bidCount}</span>
-                    </div>
+              {/* Divider after seller */}
+              <div className="border-b"></div>
+
+              {/* Price */}
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-bold text-primary">
+                    {(listing.listingType === 'Auction' && listing.highestBid 
+                      ? listing.highestBid 
+                      : listing.price
+                    ).toLocaleString('is-IS')}
+                  </span>
+                  <span className="text-lg text-muted-foreground">{t("currency")}</span>
+                </div>
+                
+                {/* Auction Info - Starting price if there are bids */}
+                {listing.listingType === 'Auction' && listing.highestBid && (
+                  <div className="text-sm text-muted-foreground mt-1">
+                    {t("startingPrice")}: {listing.price.toLocaleString('is-IS')} {t("currency")}
+                  </div>
+                )}
+                
+                {/* Auction Info - Bids and End Time */}
+                {listing.listingType === 'Auction' && (
+                  <div className="flex items-center gap-2 mt-2 text-sm text-muted-foreground">
+                    <span>
+                      {listing.bidCount} {listing.bidCount === 1 ? t("bid") : t("bids")}
+                    </span>
                     {listing.endDate && (
-                      <div className="flex justify-between items-center mb-4">
-                        <span className="text-sm text-muted-foreground">{t("endsOn")}</span>
-                        <span className="font-medium">
-                          {new Date(listing.endDate).toLocaleString('is-IS')}
+                      <>
+                        <span>•</span>
+                        <span>
+                          {t("endsOn")} {new Date(listing.endDate).toLocaleString('is-IS', {
+                            month: 'short',
+                            day: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </span>
-                      </div>
+                      </>
                     )}
-                    <Button className="w-full" size="lg">
-                      {t("placeBid")}
-                    </Button>
-                  </CardContent>
-                </Card>
+                  </div>
+                )}
+              </div>
+
+              {/* Divider after price */}
+              <div className="border-b"></div>
+
+              {/* Auction Timer */}
+              {listing.listingType === 'Auction' && listing.endDate && (
+                <div>
+                  <AuctionTimer endDate={listing.endDate} variant="large" />
+                </div>
               )}
 
-              {/* Buy Now Button */}
+              {/* Divider before buttons */}
+              {listing.listingType === 'Auction' && listing.endDate && !isOwner && (
+                <div className="border-b"></div>
+              )}
+
+              {/* Bidding Buttons */}
+              {listing.listingType === "Auction" && !isOwner && (
+                <>
+                  <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={() => setIsBidModalOpen(true)}
+                  >
+                    {t("placeBid")}
+                  </Button>
+                  
+                  {/* Buy It Now button - only show if no bids yet and buyNowPrice exists */}
+                  {listing.buyNowPrice && listing.bidCount === 0 && (
+                    <Button className="w-full" size="lg">
+                      {t("buyNow")} - {listing.buyNowPrice.toLocaleString('is-IS')} {t("currency")}
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {/* Buy Now Button - For Fixed Price Listings */}
               {listing.listingType === "BuyNow" && !isOwner && (
-                <Button className="w-full" size="lg">
-                  {t("buyNow")}
+                <>
+                  <Button className="w-full" size="lg">
+                    {t("buyNow")}
+                  </Button>
+                  
+                  {/* Add to Cart Button */}
+                  {user && (
+                    <Button 
+                      variant="outline"
+                      className="w-full gap-2" 
+                      size="lg"
+                      onClick={handleAddToCart}
+                      disabled={isAddingToCart}
+                    >
+                      <ShoppingCart className="h-5 w-5" />
+                      {isAddingToCart ? t("loading") : t("addToCart")}
+                    </Button>
+                  )}
+                </>
+              )}
+
+              {/* Make Offer Button - When seller accepts offers */}
+              {listing.acceptOffers && !isOwner && (
+                <Button 
+                  className="w-full" 
+                  size="lg"
+                  onClick={() => setIsOfferModalOpen(true)}
+                >
+                  {t("makeOffer")}
+                </Button>
+              )}
+
+              {/* Add to Watchlist Button - Visible to all authenticated users except owner */}
+              {!isOwner && user && (
+                <Button 
+                  variant={inWatchlist ? "default" : "outline"}
+                  className="w-full gap-2" 
+                  size="lg"
+                  onClick={handleToggleWatchlist}
+                  disabled={isTogglingWatchlist}
+                >
+                  <Heart className={`h-5 w-5 ${inWatchlist ? "fill-current" : ""}`} />
+                  {inWatchlist ? "Remove from Watchlist" : "Add to Watchlist"}
                 </Button>
               )}
 
@@ -356,18 +696,167 @@ export default function ListingDetailPage() {
                   </AlertDialogContent>
                 </AlertDialog>
               )}
+
+              {/* Feature Listing Button - Only visible to admins */}
+              {isAdmin && (
+                <Button 
+                  variant={listing.isFeatured ? "default" : "outline"} 
+                  className="w-full gap-2" 
+                  onClick={handleToggleFeatured}
+                  disabled={isTogglingFeatured}
+                >
+                  <Star className={`h-4 w-4 ${listing.isFeatured ? "fill-current" : ""}`} />
+                  {isTogglingFeatured 
+                    ? t("loading") 
+                    : listing.isFeatured 
+                      ? "Remove from Featured" 
+                      : "Add to Featured"
+                  }
+                </Button>
+              )}
             </div>
           </div>
 
-          {/* Description */}
-          <Card className="mt-8">
-            <CardContent className="p-6">
-              <h2 className="text-xl font-semibold mb-4">{t("description")}</h2>
-              <p className="text-muted-foreground whitespace-pre-wrap">
-                {listing.description}
-              </p>
-            </CardContent>
-          </Card>
+          {/* Tabs - About this item & Bid History */}
+          <div className="mt-8">
+            <Tabs defaultValue="about" className="w-full">
+              <TabsList className="inline-flex h-auto p-0 bg-transparent rounded-none border-b-0">
+                <TabsTrigger 
+                  value="about"
+                  className={`bg-card border border-b-0 px-6 py-3 data-[state=active]:bg-card data-[state=inactive]:bg-muted/50 data-[state=inactive]:text-muted-foreground rounded-b-none ${
+                    listing.listingType === 'Auction' ? 'rounded-tl-lg rounded-tr-none' : 'rounded-t-lg'
+                  }`}
+                >
+                  {t("aboutThisItem")}
+                </TabsTrigger>
+                {listing.listingType === 'Auction' && (
+                  <TabsTrigger 
+                    value="bids"
+                    className="bg-card border border-b-0 border-l-0 rounded-tr-lg rounded-tl-none px-6 py-3 data-[state=active]:bg-card data-[state=inactive]:bg-muted/50 data-[state=inactive]:text-muted-foreground rounded-b-none"
+                  >
+                    {t("bidHistory")} {listing.bidCount > 0 && `(${listing.bidCount})`}
+                  </TabsTrigger>
+                )}
+              </TabsList>
+
+              {/* About Tab */}
+              <TabsContent value="about" className="mt-0">
+                <Card className="rounded-tl-none border-t py-0">
+                  <CardContent className="p-6">
+                    {/* Metadata */}
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Tag className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-muted-foreground">{t("category")}</p>
+                          <p className="font-medium">{t(listing.category)}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Package className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-muted-foreground">{t("condition")}</p>
+                          <p className="font-medium">{listing.condition}</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <div>
+                          <p className="text-muted-foreground">{t("listed")}</p>
+                          <p className="font-medium">
+                            {new Date(listing.createdAt).toLocaleDateString('is-IS')}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Description */}
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2 text-muted-foreground uppercase">{t("description")}</h3>
+                      <p className="text-muted-foreground whitespace-pre-wrap">
+                        {listing.description}
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              {/* Bid History Tab */}
+              {listing.listingType === 'Auction' && (
+                <TabsContent value="bids" className="mt-0">
+                  <Card className="rounded-tl-none border-t py-0">
+                    <CardContent className="p-6">
+                      {loadingBids ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          {t("loading")}...
+                        </div>
+                      ) : bids.length === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          {t("noBidsYet")}
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          {bids.map((bid, index) => (
+                            <div 
+                              key={bid.id}
+                              className={`flex items-center justify-between p-3 rounded-lg border ${
+                                index === 0 ? 'bg-primary/5 border-primary/20' : 'bg-muted/30'
+                              }`}
+                            >
+                              <Link 
+                                href={`/profile/${bid.bidder.id}`}
+                                className="flex items-center gap-3 hover:opacity-80 transition-opacity"
+                              >
+                                {bid.bidder.profileImageUrl ? (
+                                  <Image
+                                    src={bid.bidder.profileImageUrl}
+                                    alt={`${bid.bidder.firstName} ${bid.bidder.lastName}`}
+                                    width={40}
+                                    height={40}
+                                    className="rounded-full"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                                    <User className="h-5 w-5 text-muted-foreground" />
+                                  </div>
+                                )}
+                                <div>
+                                  <p className="font-medium hover:underline">
+                                    {bid.bidder.firstName} {bid.bidder.lastName}
+                                    {index === 0 && (
+                                      <span className="ml-2 text-xs font-semibold text-primary">
+                                        {t("highestBid")}
+                                      </span>
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {new Date(bid.createdAt).toLocaleString('is-IS', {
+                                      month: 'short',
+                                      day: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit'
+                                    })}
+                                  </p>
+                                </div>
+                              </Link>
+                              <div className="text-right">
+                                <p className="font-bold text-lg">
+                                  {bid.amount.toLocaleString('is-IS')}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                  {t("currency")}
+                                </p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              )}
+            </Tabs>
+          </div>
         </div>
       </main>
 
@@ -376,6 +865,194 @@ export default function ListingDetailPage() {
           <p>© 2025 Kaup. Öll réttindi áskilin.</p>
         </div>
       </footer>
+
+      {/* Make Offer Modal */}
+      <Dialog open={isOfferModalOpen} onOpenChange={setIsOfferModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("makeOffer")}</DialogTitle>
+            <DialogDescription>
+              {listing && (
+                <>
+                  {t("makeOffer")} - {listing.title}
+                  <br />
+                  {t("price")}: {listing.price.toLocaleString('is-IS')} {t("currency")}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {offerSuccess ? (
+            <div className="py-8 text-center">
+              <div className="text-green-600 text-xl font-semibold mb-2">
+                {t("offerSubmitted")}
+              </div>
+              <p className="text-muted-foreground">
+                {t("offerSubmittedMessage")}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label htmlFor="offerAmount">
+                    {t("offerAmount")} <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="offerAmount"
+                      type="number"
+                      placeholder="0"
+                      value={offerAmount}
+                      onChange={(e) => setOfferAmount(e.target.value)}
+                      min="0"
+                      step="100"
+                      disabled={isSubmittingOffer}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      {t("currency")}
+                    </span>
+                  </div>
+                  {listing && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t("price")}: {listing.price.toLocaleString('is-IS')} {t("currency")}
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <Label htmlFor="offerMessage">
+                    {t("offerMessage")}
+                  </Label>
+                  <textarea
+                    id="offerMessage"
+                    className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    placeholder={t("offerMessagePlaceholder")}
+                    value={offerMessage}
+                    onChange={(e) => setOfferMessage(e.target.value)}
+                    maxLength={500}
+                    disabled={isSubmittingOffer}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {offerMessage.length}/500 {t("characters")}
+                  </p>
+                </div>
+
+                {offerError && (
+                  <div className="text-sm text-destructive">
+                    {offerError}
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsOfferModalOpen(false)}
+                  disabled={isSubmittingOffer}
+                >
+                  {t("cancelAction")}
+                </Button>
+                <Button
+                  onClick={handleSubmitOffer}
+                  disabled={isSubmittingOffer || !offerAmount}
+                >
+                  {isSubmittingOffer ? t("loading") : t("submitOffer")}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Place Bid Modal */}
+      <Dialog open={isBidModalOpen} onOpenChange={setIsBidModalOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t("placeBid")}</DialogTitle>
+            <DialogDescription>
+              {listing && (
+                <>
+                  {listing.title}
+                  <br />
+                  {t("currentPrice")}: {(listing.highestBid || listing.price).toLocaleString('is-IS')} {t("currency")}
+                  {listing.bidCount > 0 && (
+                    <>
+                      <br />
+                      <span className="text-xs">
+                        {listing.bidCount} {listing.bidCount === 1 ? t("bid") : t("bids")}
+                      </span>
+                    </>
+                  )}
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+
+          {bidSuccess ? (
+            <div className="py-8 text-center">
+              <div className="text-green-600 text-xl font-semibold mb-2">
+                ✓ {t("bidPlaced")}
+              </div>
+              <p className="text-muted-foreground">
+                {t("bidPlacedMessage")}
+              </p>
+            </div>
+          ) : (
+            <>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label htmlFor="bidAmount">
+                    {t("yourBid")} <span className="text-destructive">*</span>
+                  </Label>
+                  <div className="relative">
+                    <Input
+                      id="bidAmount"
+                      type="number"
+                      placeholder="0"
+                      value={bidAmount}
+                      onChange={(e) => setBidAmount(e.target.value)}
+                      min="0"
+                      step="100"
+                      disabled={isSubmittingBid}
+                    />
+                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                      {t("currency")}
+                    </span>
+                  </div>
+                  {listing && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {t("minimumBid")}: {((listing.highestBid || listing.price) + 100).toLocaleString('is-IS')} {t("currency")}
+                    </p>
+                  )}
+                </div>
+
+                {bidError && (
+                  <div className="text-sm text-destructive">
+                    {bidError}
+                  </div>
+                )}
+              </div>
+
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsBidModalOpen(false)}
+                  disabled={isSubmittingBid}
+                >
+                  {t("cancelAction")}
+                </Button>
+                <Button
+                  onClick={handleSubmitBid}
+                  disabled={isSubmittingBid || !bidAmount}
+                >
+                  {isSubmittingBid ? t("loading") : t("confirmBid")}
+                </Button>
+              </DialogFooter>
+            </>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

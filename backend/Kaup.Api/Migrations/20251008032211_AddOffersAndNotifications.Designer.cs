@@ -3,6 +3,7 @@ using System;
 using Kaup.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Kaup.Api.Migrations
 {
     [DbContext(typeof(KaupDbContext))]
-    partial class KaupDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251008032211_AddOffersAndNotifications")]
+    partial class AddOffersAndNotifications
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -44,41 +47,11 @@ namespace Kaup.Api.Migrations
                     b.ToTable("Bids");
                 });
 
-            modelBuilder.Entity("Kaup.Api.Models.CartItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("ListingId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("ListingId");
-
-                    b.HasIndex("UserId", "ListingId")
-                        .IsUnique();
-
-                    b.ToTable("CartItems");
-                });
-
             modelBuilder.Entity("Kaup.Api.Models.Listing", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("TEXT");
-
-                    b.Property<bool>("AcceptOffers")
-                        .HasColumnType("INTEGER");
 
                     b.Property<decimal?>("BuyNowPrice")
                         .HasColumnType("decimal(18,2)");
@@ -341,9 +314,6 @@ namespace Kaup.Api.Migrations
                     b.Property<string>("GoogleId")
                         .HasColumnType("TEXT");
 
-                    b.Property<bool>("IsAdmin")
-                        .HasColumnType("INTEGER");
-
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -379,33 +349,6 @@ namespace Kaup.Api.Migrations
                     b.ToTable("Users");
                 });
 
-            modelBuilder.Entity("Kaup.Api.Models.Watchlist", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("ListingId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("UserId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("ListingId");
-
-                    b.HasIndex("UserId", "ListingId")
-                        .IsUnique();
-
-                    b.ToTable("Watchlists");
-                });
-
             modelBuilder.Entity("Kaup.Api.Models.Bid", b =>
                 {
                     b.HasOne("Kaup.Api.Models.User", "Bidder")
@@ -423,25 +366,6 @@ namespace Kaup.Api.Migrations
                     b.Navigation("Bidder");
 
                     b.Navigation("Listing");
-                });
-
-            modelBuilder.Entity("Kaup.Api.Models.CartItem", b =>
-                {
-                    b.HasOne("Kaup.Api.Models.Listing", "Listing")
-                        .WithMany()
-                        .HasForeignKey("ListingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Kaup.Api.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Listing");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Kaup.Api.Models.Listing", b =>
@@ -550,25 +474,6 @@ namespace Kaup.Api.Migrations
                     b.Navigation("ReviewedUser");
 
                     b.Navigation("Reviewer");
-                });
-
-            modelBuilder.Entity("Kaup.Api.Models.Watchlist", b =>
-                {
-                    b.HasOne("Kaup.Api.Models.Listing", "Listing")
-                        .WithMany()
-                        .HasForeignKey("ListingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Kaup.Api.Models.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Listing");
-
-                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Kaup.Api.Models.Listing", b =>

@@ -23,6 +23,9 @@ public class User
     public int TotalRatings { get; set; } = 0;
     public int TotalSales { get; set; } = 0;
     
+    // Admin flag
+    public bool IsAdmin { get; set; } = false;
+    
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public DateTime? UpdatedAt { get; set; }
     

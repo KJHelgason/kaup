@@ -39,6 +39,7 @@ public class UserDto
     public double AverageRating { get; set; }
     public int TotalRatings { get; set; }
     public int TotalSales { get; set; }
+    public bool IsAdmin { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 

@@ -24,6 +24,7 @@ type AuthContextType = {
   }) => Promise<void>
   logout: () => void
   isAuthenticated: boolean
+  loading: boolean
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -31,6 +32,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
   const [token, setToken] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
 
   // Load auth state from localStorage on mount
   useEffect(() => {
@@ -41,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setToken(savedToken)
       setUser(JSON.parse(savedUser))
     }
+    setLoading(false)
   }, [])
 
   const login = async (email: string, password: string) => {
@@ -108,6 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         googleLogin,
         logout,
         isAuthenticated: !!token && !!user,
+        loading,
       }}
     >
       {children}

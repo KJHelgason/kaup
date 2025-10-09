@@ -8,7 +8,7 @@ import { getUser, getUserListings, getUserReviews, User, Listing, Review } from 
 import { useLanguage } from "@/contexts/LanguageContext"
 import { useAuth } from "@/contexts/AuthContext"
 import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams, useRouter, useSearchParams } from "next/navigation"
 import { Star, MapPin, Phone, Mail, Calendar, Package, MessageSquare, Edit } from "lucide-react"
 import Image from "next/image"
 
@@ -17,6 +17,7 @@ export default function ProfilePage() {
   const { user: currentUser } = useAuth()
   const params = useParams()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const userId = params.id as string
   
   const [user, setUser] = useState<User | null>(null)
@@ -26,6 +27,14 @@ export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState<"listings" | "about" | "feedback">("listings")
 
   const isOwnProfile = currentUser?.id === userId
+
+  // Set active tab from URL parameter
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'feedback' || tab === 'about' || tab === 'listings') {
+      setActiveTab(tab as "listings" | "about" | "feedback")
+    }
+  }, [searchParams])
 
   // Calculate positive feedback percentage
   const getPositiveFeedbackPercentage = () => {
