@@ -1087,3 +1087,170 @@ export async function clearCart(): Promise<{ success: boolean; error?: string }>
   }
 }
 
+// Message Functions
+export interface Conversation {
+  userId: string
+  userName: string
+  userProfileImage?: string
+  lastMessage: string
+  lastMessageTime: string
+  unreadCount: number
+  listingId?: string
+  listingTitle?: string
+}
+
+export interface Message {
+  id: string
+  content: string
+  senderId: string
+  senderName: string
+  senderProfileImage?: string
+  receiverId: string
+  receiverName: string
+  isRead: boolean
+  createdAt: string
+  listingId?: string
+  listingTitle?: string
+  listingImageUrl?: string
+}
+
+export async function getConversations(): Promise<Conversation[]> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return []
+    }
+
+    const response = await fetch(`${API_URL}/messages/conversations`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (response.ok) {
+      return await response.json()
+    }
+    return []
+  } catch (error) {
+    console.error('Error fetching conversations:', error)
+    return []
+  }
+}
+
+export async function getConversation(otherUserId: string): Promise<Message[]> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return []
+    }
+
+    const response = await fetch(`${API_URL}/messages/conversation/${otherUserId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (response.ok) {
+      return await response.json()
+    }
+    return []
+  } catch (error) {
+    console.error('Error fetching conversation:', error)
+    return []
+  }
+}
+
+export async function sendMessage(receiverId: string, content: string, listingId?: string): Promise<{ success: boolean; message?: Message; error?: string }> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return { success: false, error: 'Not authenticated' }
+    }
+
+    const response = await fetch(`${API_URL}/messages`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ receiverId, content, listingId }),
+    })
+
+    if (!response.ok) {
+      const data = await response.json()
+      return { success: false, error: data.message || 'Failed to send message' }
+    }
+
+    const message = await response.json()
+    return { success: true, message }
+  } catch (error) {
+    console.error('Error sending message:', error)
+    return { success: false, error: 'Network error' }
+  }
+}
+
+export async function getUnreadMessageCount(): Promise<number> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return 0
+    }
+
+    const response = await fetch(`${API_URL}/messages/unread-count`, {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    })
+
+    if (response.ok) {
+      return await response.json()
+    }
+    return 0
+  } catch (error) {
+    console.error('Error fetching unread message count:', error)
+    return 0
+  }
+}
+
+export async function markMessageAsRead(messageId: string): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return false
+    }
+
+    const response = await fetch(`${API_URL}/messages/${messageId}/mark-read`, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+
+    return response.ok
+  } catch (error) {
+    console.error('Error marking message as read:', error)
+    return false
+  }
+}
+
+export async function deleteMessage(messageId: string): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) {
+      return false
+    }
+
+    const response = await fetch(`${API_URL}/messages/${messageId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+
+    return response.ok
+  } catch (error) {
+    console.error('Error deleting message:', error)
+    return false
+  }
+}
+

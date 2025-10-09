@@ -207,9 +207,16 @@ export default function ProfilePage() {
                         <Button variant="outline" size="sm">
                           {t("share")}
                         </Button>
-                        <Button variant="outline" size="sm">
-                          {t("contact")}
-                        </Button>
+                        {!isOwnProfile && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => router.push(`/messages?userId=${userId}`)}
+                          >
+                            <MessageSquare className="h-4 w-4 mr-2" />
+                            {t("contact")}
+                          </Button>
+                        )}
                         <Button variant="outline" size="sm">
                           {t("save")}
                         </Button>

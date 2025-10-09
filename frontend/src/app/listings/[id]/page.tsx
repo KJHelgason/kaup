@@ -519,15 +519,17 @@ export default function ListingDetailPage() {
                     >
                       {t("sellerOtherItems")}
                     </Link>
-                    <span>•</span>
-                    <Link 
-                      href={`/profile/${listing.seller.id}?tab=contact`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="underline"
-                    >
-                      {t("contactSeller")}
-                    </Link>
+                    {!isOwner && (
+                      <>
+                        <span>•</span>
+                        <Link 
+                          href={`/messages?userId=${listing.seller.id}&listingId=${listing.id}`}
+                          className="underline"
+                        >
+                          {t("contactSeller")}
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

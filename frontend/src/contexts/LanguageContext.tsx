@@ -293,6 +293,18 @@ const translations: Translations = {
   removedFromWatchlist: { is: 'Fjarlægt af vöktunarlista', en: 'Removed from watchlist' },
   watchlistCount: { is: 'vöktunarlisti', en: 'watching' },
   
+  // Messages
+  messages: { is: 'Skilaboð', en: 'Messages' },
+  myMessages: { is: 'Mín skilaboð', en: 'My Messages' },
+  newMessage: { is: 'Ný skilaboð', en: 'New Message' },
+  sendMessage: { is: 'Senda skilaboð', en: 'Send Message' },
+  typeMessage: { is: 'Skrifaðu skilaboð...', en: 'Type a message...' },
+  noMessages: { is: 'Engin skilaboð', en: 'No messages' },
+  noConversations: { is: 'Engar samræður enn', en: 'No conversations yet' },
+  messageSent: { is: 'Skilaboð send!', en: 'Message sent!' },
+  messageError: { is: 'Villa kom upp við að senda skilaboð', en: 'Error sending message' },
+  startConversation: { is: 'Byrja samtal', en: 'Start a conversation' },
+  
   // Delete listing
   deleteListing: { is: 'Eyða auglýsingu', en: 'Delete Listing' },
   deleteConfirmTitle: { is: 'Ertu viss?', en: 'Are you sure?' },

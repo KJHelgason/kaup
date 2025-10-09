@@ -1,6 +1,6 @@
 "use client"
 
-import { Moon, Sun, Search, User, LogOut, LogIn, UserPlus, Bell, Package, ShoppingCart, Heart } from "lucide-react"
+import { Moon, Sun, Search, User, LogOut, LogIn, UserPlus, Bell, Package, ShoppingCart, Heart, MessageSquare } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,7 +16,7 @@ import { useAuth } from "@/contexts/AuthContext"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
-import { getNotifications, getUnreadNotificationCount, markNotificationAsRead, markAllNotificationsAsRead, Notification, getCartCount } from "@/lib/api"
+import { getNotifications, getUnreadNotificationCount, markNotificationAsRead, markAllNotificationsAsRead, Notification, getCartCount, getUnreadMessageCount, getConversations } from "@/lib/api"
 
 export function Header() {
   const { theme, setTheme } = useTheme()
@@ -28,25 +28,31 @@ export function Header() {
   const [unreadCount, setUnreadCount] = useState(0)
   const [loadingNotifications, setLoadingNotifications] = useState(false)
   const [cartCount, setCartCount] = useState(0)
+  const [unreadConversationCount, setUnreadConversationCount] = useState(0)
 
   // Fetch unread count
   useEffect(() => {
     if (isAuthenticated) {
       fetchUnreadCount()
       fetchCartCount()
+      fetchUnreadMessageCount()
       // Poll every 30 seconds
       const interval = setInterval(() => {
         fetchUnreadCount()
         fetchCartCount()
+        fetchUnreadMessageCount()
       }, 30000)
       
-      // Listen for cart updates
+      // Listen for cart and message updates
       const handleCartUpdate = () => fetchCartCount()
+      const handleMessagesUpdate = () => fetchUnreadMessageCount()
       window.addEventListener('cart-updated', handleCartUpdate)
+      window.addEventListener('messages-updated', handleMessagesUpdate)
       
       return () => {
         clearInterval(interval)
         window.removeEventListener('cart-updated', handleCartUpdate)
+        window.removeEventListener('messages-updated', handleMessagesUpdate)
       }
     }
   }, [isAuthenticated])
@@ -61,21 +67,63 @@ export function Header() {
     setCartCount(count)
   }
 
+  const fetchUnreadMessageCount = async () => {
+    const conversations = await getConversations()
+    const count = conversations.filter(c => c.unreadCount > 0).length
+    setUnreadConversationCount(count)
+  }
+
   const fetchNotifications = async () => {
     setLoadingNotifications(true)
     const data = await getNotifications(false)
-    setNotifications(data)
+    
+    // Also fetch recent conversations with unread messages
+    const conversations = await getConversations()
+    const unreadConversations = conversations.filter(c => c.unreadCount > 0)
+    
+    // Convert unread conversations to notification format
+    // Each conversation becomes ONE notification, but we store the count
+    const messageNotifications: Notification[] = unreadConversations.map(c => ({
+      id: `msg-${c.userId}`,
+      userId: c.userId,
+      type: 'message',
+      title: c.unreadCount > 1 ? `${c.unreadCount} ${t('newMessage')}s` : t('newMessage'),
+      message: `${c.userName}: ${c.lastMessage}`,
+      linkUrl: `/messages?userId=${c.userId}`,
+      relatedEntityId: c.userId,
+      isRead: false,
+      createdAt: c.lastMessageTime
+    }))
+    
+    // Combine and sort notifications
+    const allNotifications = [...data, ...messageNotifications].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    
+    setNotifications(allNotifications)
     setLoadingNotifications(false)
   }
 
   const handleNotificationClick = async (notification: Notification) => {
-    if (!notification.isRead) {
-      await markNotificationAsRead(notification.id)
-      fetchUnreadCount()
+    // Handle message notifications differently
+    if (notification.type === 'message') {
+      // Just navigate to the messages page, don't try to mark as read
+      if (notification.linkUrl) {
+        router.push(notification.linkUrl)
+      }
+      // Refresh counts after navigating
+      fetchUnreadMessageCount()
       fetchNotifications()
-    }
-    if (notification.linkUrl) {
-      router.push(notification.linkUrl)
+    } else {
+      // Handle regular notifications
+      if (!notification.isRead) {
+        await markNotificationAsRead(notification.id)
+        fetchUnreadCount()
+        fetchNotifications()
+      }
+      if (notification.linkUrl) {
+        router.push(notification.linkUrl)
+      }
     }
   }
 
@@ -144,9 +192,9 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" className="relative">
                     <Bell className="h-5 w-5" />
-                    {unreadCount > 0 && (
+                    {(unreadCount + unreadConversationCount) > 0 && (
                       <span className="absolute -top-1 -right-1 h-5 w-5 rounded-full bg-destructive text-destructive-foreground text-xs flex items-center justify-center font-semibold">
-                        {unreadCount > 9 ? '9+' : unreadCount}
+                        {(unreadCount + unreadConversationCount) > 9 ? '9+' : (unreadCount + unreadConversationCount)}
                       </span>
                     )}
                     <span className="sr-only">Notifications</span>
@@ -237,6 +285,10 @@ export function Header() {
                   <DropdownMenuItem onClick={() => router.push(`/profile/${user?.id}`)}>
                     <User className="mr-2 h-4 w-4" />
                     {t('viewProfile')}
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/messages')}>
+                    <MessageSquare className="mr-2 h-4 w-4" />
+                    {t('myMessages')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/watchlist')}>
                     <Heart className="mr-2 h-4 w-4" />

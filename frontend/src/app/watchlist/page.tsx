@@ -15,19 +15,24 @@ import { toast } from "sonner"
 
 export default function WatchlistPage() {
   const { t } = useLanguage()
-  const { isAuthenticated } = useAuth()
+  const { isAuthenticated, loading: authLoading } = useAuth()
   const router = useRouter()
   const [watchlistItems, setWatchlistItems] = useState<WatchlistItem[]>([])
   const [loading, setLoading] = useState(true)
   const [removingId, setRemovingId] = useState<string | null>(null)
 
   useEffect(() => {
+    // Wait for auth to finish loading before checking authentication
+    if (authLoading) {
+      return
+    }
+    
     if (!isAuthenticated) {
       router.push("/login")
       return
     }
     fetchWatchlist()
-  }, [isAuthenticated])
+  }, [isAuthenticated, authLoading])
 
   const fetchWatchlist = async () => {
     setLoading(true)
