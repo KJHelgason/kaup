@@ -118,7 +118,7 @@ export default function MessagesPage() {
         }
 
         // Create conversation with real user data
-        const userName = `${userData.firstName} ${userData.lastName}`.trim() || "User"
+        const userName = userData.username || "User"
         const newConversation: Conversation = {
           userId,
           userName,

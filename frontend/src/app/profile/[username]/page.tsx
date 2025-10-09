@@ -4,12 +4,13 @@ import { Header } from "@/components/Header"
 import { ListingCard } from "@/components/ListingCard"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { getUser, getUserListings, getUserReviews, User, Listing, Review } from "@/lib/api"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { getUserByUsername, getUserListings, getUserReviews, User, Listing, Review, getFollowersCount, getFollowingCount, isFollowing, followUser, unfollowUser } from "@/lib/api"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { useAuth } from "@/contexts/AuthContext"
 import { useEffect, useState } from "react"
 import { useParams, useRouter, useSearchParams } from "next/navigation"
-import { Star, MapPin, Phone, Mail, Calendar, Package, MessageSquare, Edit } from "lucide-react"
+import { Star, MapPin, Phone, Mail, Calendar, Package, MessageSquare, Edit, UserPlus, UserMinus, Share2, Copy, Check } from "lucide-react"
 import Image from "next/image"
 
 export default function ProfilePage() {
@@ -18,15 +19,21 @@ export default function ProfilePage() {
   const params = useParams()
   const router = useRouter()
   const searchParams = useSearchParams()
-  const userId = params.id as string
+  const username = params.username as string
   
   const [user, setUser] = useState<User | null>(null)
   const [listings, setListings] = useState<Listing[]>([])
   const [reviews, setReviews] = useState<Review[]>([])
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<"listings" | "about" | "feedback">("listings")
+  const [followersCount, setFollowersCount] = useState(0)
+  const [followingCount, setFollowingCount] = useState(0)
+  const [isFollowingUser, setIsFollowingUser] = useState(false)
+  const [followLoading, setFollowLoading] = useState(false)
+  const [sharePopoverOpen, setSharePopoverOpen] = useState(false)
+  const [copied, setCopied] = useState(false)
 
-  const isOwnProfile = currentUser?.id === userId
+  const isOwnProfile = currentUser?.username === username
 
   // Set active tab from URL parameter
   useEffect(() => {
@@ -69,20 +76,73 @@ export default function ProfilePage() {
 
   useEffect(() => {
     async function loadProfile() {
-      const [userData, userListings, userReviews] = await Promise.all([
-        getUser(userId),
-        getUserListings(userId),
-        getUserReviews(userId)
+      const userData = await getUserByUsername(username)
+      if (!userData) {
+        setLoading(false)
+        return
+      }
+      
+      const [userListings, userReviews, followers, followingCnt, followingStatus] = await Promise.all([
+        getUserListings(userData.id),
+        getUserReviews(userData.id),
+        getFollowersCount(userData.id),
+        getFollowingCount(userData.id),
+        currentUser ? isFollowing(userData.id) : Promise.resolve(false)
       ])
       
       setUser(userData)
       setListings(userListings)
       setReviews(userReviews)
+      setFollowersCount(followers)
+      setFollowingCount(followingCnt)
+      setIsFollowingUser(followingStatus)
       setLoading(false)
     }
     
     loadProfile()
-  }, [userId])
+  }, [username, currentUser])
+
+  const handleFollowToggle = async () => {
+    if (!currentUser || !user) {
+      router.push('/login')
+      return
+    }
+
+    setFollowLoading(true)
+    try {
+      if (isFollowingUser) {
+        const success = await unfollowUser(user.id)
+        if (success) {
+          setIsFollowingUser(false)
+          setFollowersCount(prev => prev - 1)
+        }
+      } else {
+        const success = await followUser(user.id)
+        if (success) {
+          setIsFollowingUser(true)
+          setFollowersCount(prev => prev + 1)
+        }
+      }
+    } catch (error) {
+      console.error('Error toggling follow:', error)
+    } finally {
+      setFollowLoading(false)
+    }
+  }
+
+  const handleCopyLink = async () => {
+    if (!user) return
+
+    const profileUrl = `${window.location.origin}/profile/${user.username}`
+    
+    try {
+      await navigator.clipboard.writeText(profileUrl)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000) // Reset after 2 seconds
+    } catch (error) {
+      console.error('Error copying to clipboard:', error)
+    }
+  }
 
   // Sync with currentUser if viewing own profile
   useEffect(() => {
@@ -152,7 +212,7 @@ export default function ProfilePage() {
                     <div className="w-24 h-24 md:w-32 md:h-32 rounded-full overflow-hidden border-4 border-background shadow-lg relative">
                       <Image
                         src={user.profileImageUrl}
-                        alt={`${user.firstName} ${user.lastName}`}
+                        alt={user.username}
                         fill
                         className="object-cover"
                         unoptimized
@@ -160,7 +220,7 @@ export default function ProfilePage() {
                     </div>
                   ) : (
                     <div className="w-24 h-24 md:w-32 md:h-32 rounded-full bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center text-primary-foreground text-3xl md:text-4xl font-bold shadow-lg">
-                      {user.firstName[0]}{user.lastName[0]}
+                      {user.username[0].toUpperCase()}
                     </div>
                   )}
                 </div>
@@ -170,7 +230,7 @@ export default function ProfilePage() {
                   <div className="flex items-start justify-between mb-4">
                     <div>
                       <h1 className="text-3xl font-bold mb-2">
-                        {user.firstName} {user.lastName}
+                        {user.username}
                       </h1>
                       
                       {/* Rating */}
@@ -198,28 +258,81 @@ export default function ProfilePage() {
                         </div>
                         <div className="h-4 w-px bg-border" />
                         <div className="font-medium text-muted-foreground">
-                          <span>0 {t("followers")}</span>
+                          <span>{followersCount} {t("followers")}</span>
                         </div>
                       </div>
 
                       {/* Action Buttons */}
                       <div className="flex gap-2">
-                        <Button variant="outline" size="sm">
-                          {t("share")}
-                        </Button>
+                        {!isOwnProfile && (
+                          <Button 
+                            variant={isFollowingUser ? "outline" : "default"}
+                            size="sm"
+                            onClick={handleFollowToggle}
+                            disabled={followLoading}
+                          >
+                            {isFollowingUser ? (
+                              <>
+                                <UserMinus className="h-4 w-4 mr-2" />
+                                {t("unfollow")}
+                              </>
+                            ) : (
+                              <>
+                                <UserPlus className="h-4 w-4 mr-2" />
+                                {t("follow")}
+                              </>
+                            )}
+                          </Button>
+                        )}
+                        
+                        {/* Share Popover */}
+                        <Popover open={sharePopoverOpen} onOpenChange={setSharePopoverOpen}>
+                          <PopoverTrigger asChild>
+                            <Button variant="outline" size="sm">
+                              <Share2 className="h-4 w-4 mr-2" />
+                              {t("share")}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-80" align="start">
+                            <div className="space-y-2">
+                              <p className="text-sm font-medium">{t("shareProfile")}</p>
+                              <div className="flex items-center space-x-2">
+                                <input
+                                  readOnly
+                                  value={`${window.location.origin}/profile/${user.username}`}
+                                  className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm"
+                                />
+                                <Button 
+                                  type="button" 
+                                  size="sm" 
+                                  className="px-3 flex-shrink-0"
+                                  onClick={handleCopyLink}
+                                >
+                                  {copied ? (
+                                    <>
+                                      <Check className="h-4 w-4" />
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Copy className="h-4 w-4" />
+                                    </>
+                                  )}
+                                </Button>
+                              </div>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                        
                         {!isOwnProfile && (
                           <Button 
                             variant="outline" 
                             size="sm"
-                            onClick={() => router.push(`/messages?userId=${userId}`)}
+                            onClick={() => router.push(`/messages?userId=${user.id}`)}
                           >
                             <MessageSquare className="h-4 w-4 mr-2" />
                             {t("contact")}
                           </Button>
                         )}
-                        <Button variant="outline" size="sm">
-                          {t("save")}
-                        </Button>
                       </div>
                     </div>
 
@@ -289,7 +402,7 @@ export default function ProfilePage() {
                   </CardContent>
                 </Card>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                   {listings.map((listing) => (
                     <ListingCard key={listing.id} listing={listing} />
                   ))}
@@ -449,7 +562,7 @@ export default function ProfilePage() {
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex items-center gap-2">
                             <span className="font-medium">
-                              {review.reviewer.firstName[0]}***{review.reviewer.lastName[0]}
+                              {review.reviewer.username}
                             </span>
                             <span className="text-sm text-muted-foreground">
                               ({user.totalRatings})

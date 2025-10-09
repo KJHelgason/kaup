@@ -278,11 +278,11 @@ export function Header() {
                 <DropdownMenuTrigger asChild>
                   <Button variant="default" size="sm" className="hidden sm:flex gap-2">
                     <User className="h-4 w-4" />
-                    {user?.firstName}
+                    {user?.username}
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48">
-                  <DropdownMenuItem onClick={() => router.push(`/profile/${user?.id}`)}>
+                  <DropdownMenuItem onClick={() => router.push(`/profile/${user?.username}`)}>
                     <User className="mr-2 h-4 w-4" />
                     {t('viewProfile')}
                   </DropdownMenuItem>

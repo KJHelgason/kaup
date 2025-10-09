@@ -18,6 +18,7 @@ public class KaupDbContext : DbContext
     public DbSet<Notification> Notifications { get; set; }
     public DbSet<Watchlist> Watchlists { get; set; }
     public DbSet<CartItem> CartItems { get; set; }
+    public DbSet<Follow> Follows { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -194,6 +195,26 @@ public class KaupDbContext : DbContext
             
             // Prevent duplicate cart entries
             entity.HasIndex(e => new { e.UserId, e.ListingId }).IsUnique();
+            entity.HasIndex(e => e.CreatedAt);
+        });
+
+        // Follow configuration
+        modelBuilder.Entity<Follow>(entity =>
+        {
+            entity.HasKey(e => e.Id);
+            
+            entity.HasOne(e => e.Follower)
+                .WithMany()
+                .HasForeignKey(e => e.FollowerId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            entity.HasOne(e => e.Following)
+                .WithMany()
+                .HasForeignKey(e => e.FollowingId)
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            // Prevent duplicate follows and self-follows
+            entity.HasIndex(e => new { e.FollowerId, e.FollowingId }).IsUnique();
             entity.HasIndex(e => e.CreatedAt);
         });
     }

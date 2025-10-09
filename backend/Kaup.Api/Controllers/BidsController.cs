@@ -51,6 +51,7 @@ public class BidsController : ControllerBase
             Bidder = new BidderDto
             {
                 Id = b.Bidder.Id,
+                Username = b.Bidder.Username,
                 FirstName = b.Bidder.FirstName,
                 LastName = b.Bidder.LastName,
                 ProfileImageUrl = b.Bidder.ProfileImageUrl
@@ -84,6 +85,7 @@ public class BidsController : ControllerBase
             Bidder = new BidderDto
             {
                 Id = b.Bidder.Id,
+                Username = b.Bidder.Username,
                 FirstName = b.Bidder.FirstName,
                 LastName = b.Bidder.LastName,
                 ProfileImageUrl = b.Bidder.ProfileImageUrl
@@ -176,6 +178,7 @@ public class BidsController : ControllerBase
             Bidder = new BidderDto
             {
                 Id = createdBid.Bidder.Id,
+                Username = createdBid.Bidder.Username,
                 FirstName = createdBid.Bidder.FirstName,
                 LastName = createdBid.Bidder.LastName,
                 ProfileImageUrl = createdBid.Bidder.ProfileImageUrl

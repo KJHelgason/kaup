@@ -3,6 +3,7 @@ using System;
 using Kaup.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Kaup.Api.Migrations
 {
     [DbContext(typeof(KaupDbContext))]
-    partial class KaupDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251009154139_AddUsernameToUser")]
+    partial class AddUsernameToUser
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
@@ -69,33 +72,6 @@ namespace Kaup.Api.Migrations
                         .IsUnique();
 
                     b.ToTable("CartItems");
-                });
-
-            modelBuilder.Entity("Kaup.Api.Models.Follow", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("TEXT");
-
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("FollowerId")
-                        .HasColumnType("TEXT");
-
-                    b.Property<Guid>("FollowingId")
-                        .HasColumnType("TEXT");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CreatedAt");
-
-                    b.HasIndex("FollowingId");
-
-                    b.HasIndex("FollowerId", "FollowingId")
-                        .IsUnique();
-
-                    b.ToTable("Follows");
                 });
 
             modelBuilder.Entity("Kaup.Api.Models.Listing", b =>
@@ -473,25 +449,6 @@ namespace Kaup.Api.Migrations
                     b.Navigation("Listing");
 
                     b.Navigation("User");
-                });
-
-            modelBuilder.Entity("Kaup.Api.Models.Follow", b =>
-                {
-                    b.HasOne("Kaup.Api.Models.User", "Follower")
-                        .WithMany()
-                        .HasForeignKey("FollowerId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Kaup.Api.Models.User", "Following")
-                        .WithMany()
-                        .HasForeignKey("FollowingId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Follower");
-
-                    b.Navigation("Following");
                 });
 
             modelBuilder.Entity("Kaup.Api.Models.Listing", b =>

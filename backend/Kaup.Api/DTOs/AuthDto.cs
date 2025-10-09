@@ -2,11 +2,9 @@ namespace Kaup.Api.DTOs;
 
 public class RegisterDto
 {
+    public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
     public string Password { get; set; } = string.Empty;
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
-    public string? PhoneNumber { get; set; }
 }
 
 public class LoginDto
@@ -27,9 +25,10 @@ public class GoogleAuthDto
 public class UserDto
 {
     public Guid Id { get; set; }
+    public string Username { get; set; } = string.Empty;
     public string Email { get; set; } = string.Empty;
-    public string FirstName { get; set; } = string.Empty;
-    public string LastName { get; set; } = string.Empty;
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
     public string? PhoneNumber { get; set; }
     public string? ProfileImageUrl { get; set; }
     public string? Bio { get; set; }
@@ -45,6 +44,7 @@ public class UserDto
 
 public class UpdateProfileDto
 {
+    public string? Username { get; set; }
     public string? FirstName { get; set; }
     public string? LastName { get; set; }
     public string? PhoneNumber { get; set; }

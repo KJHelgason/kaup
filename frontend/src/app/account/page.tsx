@@ -20,6 +20,7 @@ export default function AccountPage() {
   const router = useRouter()
   
   const [formData, setFormData] = useState({
+    username: "",
     firstName: "",
     lastName: "",
     phoneNumber: "",
@@ -41,8 +42,9 @@ export default function AccountPage() {
 
     if (user) {
       setFormData({
-        firstName: user.firstName,
-        lastName: user.lastName,
+        username: user.username,
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
         phoneNumber: user.phoneNumber || "",
         bio: user.bio || "",
         address: user.address || "",
@@ -118,26 +120,41 @@ export default function AccountPage() {
                   />
                 </div>
 
+                {/* Username */}
+                <div className="space-y-2">
+                  <Label htmlFor="username">{t("username")}</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    value={formData.username}
+                    onChange={(e) => setFormData({ ...formData, username: e.target.value })}
+                    pattern="[a-zA-Z0-9_-]{3,20}"
+                    title="Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens"
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    3-20 characters. Letters, numbers, underscores, and hyphens only.
+                  </p>
+                </div>
+
                 {/* Name Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">{t("firstName")}</Label>
+                    <Label htmlFor="firstName">{t("firstName")} ({t("optional")})</Label>
                     <Input
                       id="firstName"
                       type="text"
                       value={formData.firstName}
                       onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                      required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">{t("lastName")}</Label>
+                    <Label htmlFor="lastName">{t("lastName")} ({t("optional")})</Label>
                     <Input
                       id="lastName"
                       type="text"
                       value={formData.lastName}
                       onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                      required
                     />
                   </div>
                 </div>
@@ -247,7 +264,7 @@ export default function AccountPage() {
                   <Button
                     type="button"
                     variant="outline"
-                    onClick={() => router.push(`/profile/${user.id}`)}
+                    onClick={() => router.push(`/profile/${user.username}`)}
                   >
                     {t("viewProfile")}
                   </Button>

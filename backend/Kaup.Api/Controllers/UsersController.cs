@@ -27,6 +27,34 @@ public class UsersController : ControllerBase
         return Ok(new UserDto
         {
             Id = user.Id,
+            Username = user.Username,
+            Email = user.Email,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            PhoneNumber = user.PhoneNumber,
+            ProfileImageUrl = user.ProfileImageUrl,
+            Bio = user.Bio,
+            Address = user.Address,
+            City = user.City,
+            PostalCode = user.PostalCode,
+            AverageRating = user.AverageRating,
+            TotalRatings = user.TotalRatings,
+            TotalSales = user.TotalSales,
+            CreatedAt = user.CreatedAt
+        });
+    }
+
+    [HttpGet("username/{username}")]
+    public async Task<ActionResult<UserDto>> GetUserByUsername(string username)
+    {
+        var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+        if (user == null)
+            return NotFound();
+
+        return Ok(new UserDto
+        {
+            Id = user.Id,
+            Username = user.Username,
             Email = user.Email,
             FirstName = user.FirstName,
             LastName = user.LastName,
@@ -52,10 +80,24 @@ public class UsersController : ControllerBase
 
         // TODO: Verify that the authenticated user matches the id
 
-        if (!string.IsNullOrWhiteSpace(updateDto.FirstName))
+        // Update username with validation
+        if (!string.IsNullOrWhiteSpace(updateDto.Username))
+        {
+            // Validate username format
+            if (!System.Text.RegularExpressions.Regex.IsMatch(updateDto.Username, @"^[a-zA-Z0-9_-]{3,20}$"))
+                return BadRequest(new { message = "Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens" });
+
+            // Check if username is already taken by another user
+            if (updateDto.Username != user.Username && await _context.Users.AnyAsync(u => u.Username == updateDto.Username))
+                return BadRequest(new { message = "Username is already taken" });
+
+            user.Username = updateDto.Username;
+        }
+
+        if (updateDto.FirstName != null)
             user.FirstName = updateDto.FirstName;
         
-        if (!string.IsNullOrWhiteSpace(updateDto.LastName))
+        if (updateDto.LastName != null)
             user.LastName = updateDto.LastName;
         
         if (updateDto.PhoneNumber != null)
@@ -84,6 +126,7 @@ public class UsersController : ControllerBase
         return Ok(new
         {
             id = user.Id,
+            username = user.Username,
             email = user.Email,
             firstName = user.FirstName,
             lastName = user.LastName,
@@ -126,6 +169,7 @@ public class UsersController : ControllerBase
             Seller = new SellerDto
             {
                 Id = l.Seller.Id,
+                Username = l.Seller.Username,
                 FirstName = l.Seller.FirstName,
                 LastName = l.Seller.LastName,
                 ProfileImageUrl = l.Seller.ProfileImageUrl
@@ -153,6 +197,7 @@ public class UsersController : ControllerBase
                 Reviewer = new SellerDto
                 {
                     Id = r.Reviewer.Id,
+                    Username = r.Reviewer.Username,
                     FirstName = r.Reviewer.FirstName,
                     LastName = r.Reviewer.LastName,
                     ProfileImageUrl = r.Reviewer.ProfileImageUrl
@@ -214,6 +259,7 @@ public class UsersController : ControllerBase
             Reviewer = new SellerDto
             {
                 Id = reviewer.Id,
+                Username = reviewer.Username,
                 FirstName = reviewer.FirstName,
                 LastName = reviewer.LastName,
                 ProfileImageUrl = reviewer.ProfileImageUrl

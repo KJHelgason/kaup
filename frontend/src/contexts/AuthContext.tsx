@@ -9,11 +9,9 @@ type AuthContextType = {
   token: string | null
   login: (email: string, password: string) => Promise<void>
   register: (data: {
+    username: string
     email: string
     password: string
-    firstName: string
-    lastName: string
-    phoneNumber?: string
   }) => Promise<void>
   googleLogin: (data: {
     email: string
@@ -57,11 +55,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   const register = async (data: {
+    username: string
     email: string
     password: string
-    firstName: string
-    lastName: string
-    phoneNumber?: string
   }) => {
     const response = await apiRegister(data)
     if (response) {

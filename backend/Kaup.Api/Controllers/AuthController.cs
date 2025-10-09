@@ -30,16 +30,27 @@ public class AuthController : ControllerBase
         // Validate input
         if (string.IsNullOrWhiteSpace(registerDto.Email) || 
             string.IsNullOrWhiteSpace(registerDto.Password) ||
-            string.IsNullOrWhiteSpace(registerDto.FirstName) ||
-            string.IsNullOrWhiteSpace(registerDto.LastName))
+            string.IsNullOrWhiteSpace(registerDto.Username))
         {
-            return BadRequest("All fields are required");
+            return BadRequest("Email, password, and username are required");
         }
 
-        // Check if user already exists
+        // Validate username format (alphanumeric, underscores, hyphens, 3-20 chars)
+        if (!System.Text.RegularExpressions.Regex.IsMatch(registerDto.Username, @"^[a-zA-Z0-9_-]{3,20}$"))
+        {
+            return BadRequest("Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens");
+        }
+
+        // Check if email already exists
         if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
         {
             return BadRequest("Email already registered");
+        }
+
+        // Check if username already exists
+        if (await _context.Users.AnyAsync(u => u.Username == registerDto.Username))
+        {
+            return BadRequest("Username already taken");
         }
 
         // Hash password
@@ -48,11 +59,9 @@ public class AuthController : ControllerBase
         // Create user
         var user = new User
         {
+            Username = registerDto.Username,
             Email = registerDto.Email,
             PasswordHash = passwordHash,
-            FirstName = registerDto.FirstName,
-            LastName = registerDto.LastName,
-            PhoneNumber = registerDto.PhoneNumber,
             AuthProvider = "Local"
         };
 
@@ -65,6 +74,7 @@ public class AuthController : ControllerBase
         var userDto = new UserDto
         {
             Id = user.Id,
+            Username = user.Username,
             Email = user.Email,
             FirstName = user.FirstName,
             LastName = user.LastName,
@@ -116,6 +126,7 @@ public class AuthController : ControllerBase
         var userDto = new UserDto
         {
             Id = user.Id,
+            Username = user.Username,
             Email = user.Email,
             FirstName = user.FirstName,
             LastName = user.LastName,
@@ -187,12 +198,25 @@ public class AuthController : ControllerBase
             else
             {
                 // Create new user from Google data
+                // Generate username from email
+                var baseUsername = googleAuthDto.Email.Split('@')[0].ToLower();
+                var username = baseUsername;
+                var counter = 1;
+                
+                // Ensure username is unique
+                while (await _context.Users.AnyAsync(u => u.Username == username))
+                {
+                    username = $"{baseUsername}{counter}";
+                    counter++;
+                }
+                
                 user = new User
                 {
+                    Username = username,
                     Email = googleAuthDto.Email,
                     GoogleId = googleAuthDto.GoogleId,
-                    FirstName = googleAuthDto.FirstName ?? "",
-                    LastName = googleAuthDto.LastName ?? "",
+                    FirstName = googleAuthDto.FirstName,
+                    LastName = googleAuthDto.LastName,
                     ProfileImageUrl = googleAuthDto.ProfileImageUrl,
                     PasswordHash = "", // No password for Google auth
                     AuthProvider = "Google"
@@ -218,6 +242,7 @@ public class AuthController : ControllerBase
         var userDto = new UserDto
         {
             Id = user.Id,
+            Username = user.Username,
             Email = user.Email,
             FirstName = user.FirstName,
             LastName = user.LastName,

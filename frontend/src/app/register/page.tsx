@@ -21,18 +21,27 @@ export default function RegisterPage() {
   const [googleLoading, setGoogleLoading] = useState(false)
   const [error, setError] = useState("")
 
+  const [username, setUsername] = useState("")
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
-  const [firstName, setFirstName] = useState("")
-  const [lastName, setLastName] = useState("")
-  const [phoneNumber, setPhoneNumber] = useState("")
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setError("")
 
     // Validation
+    if (!username.trim() || !email.trim() || !password.trim()) {
+      setError(t("allFieldsRequired") || "All fields are required")
+      return
+    }
+
+    // Username validation
+    if (!/^[a-zA-Z0-9_-]{3,20}$/.test(username)) {
+      setError("Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens")
+      return
+    }
+
     if (password !== confirmPassword) {
       setError(t("passwordMismatch"))
       return
@@ -47,11 +56,9 @@ export default function RegisterPage() {
 
     try {
       await register({
+        username,
         email,
-        password,
-        firstName,
-        lastName,
-        phoneNumber: phoneNumber || undefined
+        password
       })
       router.push("/") // Redirect to homepage after successful registration
     } catch (err) {
@@ -115,30 +122,23 @@ export default function RegisterPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                {/* Name Fields */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label htmlFor="firstName">{t("firstName")}</Label>
-                    <Input
-                      id="firstName"
-                      type="text"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      required
-                      autoComplete="given-name"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="lastName">{t("lastName")}</Label>
-                    <Input
-                      id="lastName"
-                      type="text"
-                      value={lastName}
-                      onChange={(e) => setLastName(e.target.value)}
-                      required
-                      autoComplete="family-name"
-                    />
-                  </div>
+                {/* Username */}
+                <div>
+                  <Label htmlFor="username">{t("username") || "Username"}</Label>
+                  <Input
+                    id="username"
+                    type="text"
+                    placeholder="johndoe123"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    required
+                    autoComplete="username"
+                    pattern="[a-zA-Z0-9_-]{3,20}"
+                    title="Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens"
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    3-20 characters. Letters, numbers, underscores, and hyphens only.
+                  </p>
                 </div>
 
                 {/* Email */}
@@ -152,21 +152,6 @@ export default function RegisterPage() {
                     onChange={(e) => setEmail(e.target.value)}
                     required
                     autoComplete="email"
-                  />
-                </div>
-
-                {/* Phone Number */}
-                <div>
-                  <Label htmlFor="phoneNumber">
-                    {t("phoneNumber")} ({t("optional")})
-                  </Label>
-                  <Input
-                    id="phoneNumber"
-                    type="tel"
-                    placeholder="555-1234"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    autoComplete="tel"
                   />
                 </div>
 

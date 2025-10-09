@@ -81,6 +81,7 @@ public class ListingsController : ControllerBase
                 Seller = new SellerDto
                 {
                     Id = l.Seller.Id,
+                    Username = l.Seller.Username,
                     FirstName = l.Seller.FirstName,
                     LastName = l.Seller.LastName,
                     ProfileImageUrl = l.Seller.ProfileImageUrl
@@ -127,6 +128,7 @@ public class ListingsController : ControllerBase
             Seller = new SellerDto
             {
                 Id = listing.Seller.Id,
+                Username = listing.Seller.Username,
                 FirstName = listing.Seller.FirstName,
                 LastName = listing.Seller.LastName,
                 ProfileImageUrl = listing.Seller.ProfileImageUrl
@@ -187,6 +189,7 @@ public class ListingsController : ControllerBase
             Seller = new SellerDto
             {
                 Id = seller.Id,
+                Username = seller.Username,
                 FirstName = seller.FirstName,
                 LastName = seller.LastName,
                 ProfileImageUrl = seller.ProfileImageUrl
@@ -332,6 +335,7 @@ public class ListingsController : ControllerBase
                 Seller = new SellerDto
                 {
                     Id = l.Seller.Id,
+                    Username = l.Seller.Username,
                     FirstName = l.Seller.FirstName,
                     LastName = l.Seller.LastName,
                     ProfileImageUrl = l.Seller.ProfileImageUrl
@@ -379,6 +383,7 @@ public class ListingsController : ControllerBase
                 Seller = new SellerDto
                 {
                     Id = l.Seller.Id,
+                    Username = l.Seller.Username,
                     FirstName = l.Seller.FirstName,
                     LastName = l.Seller.LastName,
                     ProfileImageUrl = l.Seller.ProfileImageUrl

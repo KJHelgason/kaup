@@ -178,11 +178,10 @@ export default function CartPage() {
                           {item.listingTitle}
                         </h3>
                       </Link>
-                      <Link href={`/profile/${item.sellerId}`}>
-                        <p className="text-sm text-muted-foreground hover:underline">
-                          Sold by {item.sellerName}
-                        </p>
-                      </Link>
+                      {/* TODO: Update backend to include seller username in cart DTO */}
+                      <p className="text-sm text-muted-foreground">
+                        Sold by {item.sellerName}
+                      </p>
                       <p className="text-xl font-bold mt-2">
                         {item.listingPrice.toLocaleString()} kr
                       </p>

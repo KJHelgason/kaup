@@ -468,14 +468,14 @@ export default function ListingDetailPage() {
               <div className="flex items-start gap-3">
                 {/* Seller Avatar */}
                 <Link 
-                  href={`/profile/${listing.seller.id}`}
+                  href={`/profile/${listing.seller.username}`}
                   target="_blank"
                   rel="noopener noreferrer"
                 >
                   {listing.seller.profileImageUrl ? (
                     <Image
                       src={listing.seller.profileImageUrl}
-                      alt={`${listing.seller.firstName} ${listing.seller.lastName}`}
+                      alt={listing.seller.username}
                       width={48}
                       height={48}
                       className="rounded-full"
@@ -492,18 +492,18 @@ export default function ListingDetailPage() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
                     <Link 
-                      href={`/profile/${listing.seller.id}`}
+                      href={`/profile/${listing.seller.username}`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="font-semibold hover:underline"
                     >
-                      {listing.seller.firstName} {listing.seller.lastName}
+                      {listing.seller.username}
                     </Link>
                     <span className="text-sm text-muted-foreground">(0)</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-sm text-muted-foreground flex-wrap">
                     <Link 
-                      href={`/profile/${listing.seller.id}?tab=feedback`}
+                      href={`/profile/${listing.seller.username}?tab=feedback`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="text-green-600 font-medium underline"
@@ -512,7 +512,7 @@ export default function ListingDetailPage() {
                     </Link>
                     <span>•</span>
                     <Link 
-                      href={`/profile/${listing.seller.id}?tab=listings`}
+                      href={`/profile/${listing.seller.username}?tab=listings`}
                       target="_blank"
                       rel="noopener noreferrer"
                       className="underline"
@@ -812,7 +812,7 @@ export default function ListingDetailPage() {
                                 {bid.bidder.profileImageUrl ? (
                                   <Image
                                     src={bid.bidder.profileImageUrl}
-                                    alt={`${bid.bidder.firstName} ${bid.bidder.lastName}`}
+                                    alt={bid.bidder.username}
                                     width={40}
                                     height={40}
                                     className="rounded-full"
@@ -824,7 +824,7 @@ export default function ListingDetailPage() {
                                 )}
                                 <div>
                                   <p className="font-medium hover:underline">
-                                    {bid.bidder.firstName} {bid.bidder.lastName}
+                                    {bid.bidder.username}
                                     {index === 0 && (
                                       <span className="ml-2 text-xs font-semibold text-primary">
                                         {t("highestBid")}

@@ -17,8 +17,9 @@ export interface Listing {
   endDate?: string
   seller: {
     id: string
-    firstName: string
-    lastName: string
+    username: string
+    firstName?: string
+    lastName?: string
     profileImageUrl?: string
   }
   bidCount: number
@@ -362,9 +363,10 @@ export async function getWatchlistCount(listingId: string): Promise<number> {
 // Auth Types
 export interface User {
   id: string
+  username: string
   email: string
-  firstName: string
-  lastName: string
+  firstName?: string
+  lastName?: string
   phoneNumber?: string
   profileImageUrl?: string
   bio?: string
@@ -390,8 +392,9 @@ export interface Review {
   createdAt: string
   reviewer: {
     id: string
-    firstName: string
-    lastName: string
+    username: string
+    firstName?: string
+    lastName?: string
     profileImageUrl?: string
   }
   listingId?: string
@@ -399,11 +402,9 @@ export interface Review {
 
 // Auth Functions
 export async function register(data: {
+  username: string
   email: string
   password: string
-  firstName: string
-  lastName: string
-  phoneNumber?: string
 }): Promise<AuthResponse | null> {
   try {
     const response = await fetch(`${API_URL}/auth/register`, {
@@ -495,6 +496,21 @@ export async function getUser(id: string): Promise<User | null> {
     return response.json()
   } catch (error) {
     console.error('Error fetching user:', error)
+    return null
+  }
+}
+
+export async function getUserByUsername(username: string): Promise<User | null> {
+  try {
+    const response = await fetch(`${API_URL}/users/username/${username}`)
+    
+    if (!response.ok) {
+      return null
+    }
+    
+    return response.json()
+  } catch (error) {
+    console.error('Error fetching user by username:', error)
     return null
   }
 }
@@ -842,8 +858,9 @@ export interface Bid {
   listingId: string
   bidder: {
     id: string
-    firstName: string
-    lastName: string
+    username: string
+    firstName?: string
+    lastName?: string
     profileImageUrl?: string
   }
 }
@@ -1254,3 +1271,112 @@ export async function deleteMessage(messageId: string): Promise<boolean> {
   }
 }
 
+// ==================== FOLLOWS ====================
+
+export async function getFollowersCount(userId: string): Promise<number> {
+  try {
+    const response = await fetch(`${API_URL}/follows/user/${userId}/followers-count`)
+    if (!response.ok) return 0
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching followers count:', error)
+    return 0
+  }
+}
+
+export async function getFollowingCount(userId: string): Promise<number> {
+  try {
+    const response = await fetch(`${API_URL}/follows/user/${userId}/following-count`)
+    if (!response.ok) return 0
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching following count:', error)
+    return 0
+  }
+}
+
+export async function isFollowing(userId: string): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) return false
+
+    const response = await fetch(`${API_URL}/follows/is-following/${userId}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+    
+    if (!response.ok) return false
+    return await response.json()
+  } catch (error) {
+    console.error('Error checking follow status:', error)
+    return false
+  }
+}
+
+export async function followUser(userId: string): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) return false
+
+    const response = await fetch(`${API_URL}/follows/${userId}`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+
+    return response.ok
+  } catch (error) {
+    console.error('Error following user:', error)
+    return false
+  }
+}
+
+export async function unfollowUser(userId: string): Promise<boolean> {
+  try {
+    const token = localStorage.getItem('kaup-token')
+    if (!token) return false
+
+    const response = await fetch(`${API_URL}/follows/${userId}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+    })
+
+    return response.ok
+  } catch (error) {
+    console.error('Error unfollowing user:', error)
+    return false
+  }
+}
+
+export interface FollowerUser {
+  id: string
+  username: string
+  profileImageUrl?: string
+  followedAt: string
+}
+
+export async function getFollowers(userId: string): Promise<FollowerUser[]> {
+  try {
+    const response = await fetch(`${API_URL}/follows/user/${userId}/followers`)
+    if (!response.ok) return []
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching followers:', error)
+    return []
+  }
+}
+
+export async function getFollowing(userId: string): Promise<FollowerUser[]> {
+  try {
+    const response = await fetch(`${API_URL}/follows/user/${userId}/following`)
+    if (!response.ok) return []
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching following:', error)
+    return []
+  }
+}
