@@ -188,7 +188,12 @@ public class AuthController : ControllerBase
                 {
                     user.GoogleId = googleAuthDto.GoogleId;
                     user.AuthProvider = "Google";
-                    if (!string.IsNullOrEmpty(googleAuthDto.ProfileImageUrl))
+                    // Only set Google profile image if user doesn't have a custom uploaded image
+                    // Check if current image is from S3 (uploaded) or missing
+                    var hasUploadedImage = !string.IsNullOrEmpty(user.ProfileImageUrl) && 
+                                          user.ProfileImageUrl.Contains("amazonaws.com");
+                    
+                    if (!hasUploadedImage && !string.IsNullOrEmpty(googleAuthDto.ProfileImageUrl))
                     {
                         user.ProfileImageUrl = googleAuthDto.ProfileImageUrl;
                     }
@@ -228,8 +233,12 @@ public class AuthController : ControllerBase
         }
         else
         {
-            // Update profile image if provided
-            if (!string.IsNullOrEmpty(googleAuthDto.ProfileImageUrl))
+            // User already exists - only update profile image if they don't have a custom uploaded one
+            // This prevents overwriting uploaded S3 images with Google image on every login
+            var hasUploadedImage = !string.IsNullOrEmpty(user.ProfileImageUrl) && 
+                                   user.ProfileImageUrl.Contains("amazonaws.com");
+            
+            if (!hasUploadedImage && !string.IsNullOrEmpty(googleAuthDto.ProfileImageUrl))
             {
                 user.ProfileImageUrl = googleAuthDto.ProfileImageUrl;
                 await _context.SaveChangesAsync();

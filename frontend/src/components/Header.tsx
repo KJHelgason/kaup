@@ -286,6 +286,10 @@ export function Header() {
                     <User className="mr-2 h-4 w-4" />
                     {t('viewProfile')}
                   </DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => router.push('/offers')}>
+                    <Package className="mr-2 h-4 w-4" />
+                    {t('myOffers')}
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/messages')}>
                     <MessageSquare className="mr-2 h-4 w-4" />
                     {t('myMessages')}
@@ -293,10 +297,6 @@ export function Header() {
                   <DropdownMenuItem onClick={() => router.push('/watchlist')}>
                     <Heart className="mr-2 h-4 w-4" />
                     {t('myWatchlist')}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => router.push('/offers')}>
-                    <Package className="mr-2 h-4 w-4" />
-                    {t('myOffers')}
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => router.push('/account')}>
                     <User className="mr-2 h-4 w-4" />

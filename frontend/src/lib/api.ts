@@ -9,6 +9,7 @@ export interface Listing {
   category: string
   condition: string
   imageUrls: string[]
+  thumbnailUrls: string[]
   listingType: string
   status: string
   isFeatured: boolean
@@ -24,6 +25,16 @@ export interface Listing {
   }
   bidCount: number
   highestBid?: number
+  quantity: number
+  quantitySold: number
+  itemLocation?: string
+  shippingCost: number
+  shippingMethod?: string
+  handlingTime?: number
+  internationalShipping: boolean
+  returnsAccepted: boolean
+  returnPeriod?: number
+  returnShippingPaidBy?: string
 }
 
 export async function getListings(params?: {
@@ -150,6 +161,15 @@ export async function createListing(listing: {
   acceptOffers: boolean
   endDate?: string
   sellerId: string
+  quantity: number
+  itemLocation: string
+  shippingCost: number
+  shippingMethod: string
+  handlingTime: number
+  internationalShipping: boolean
+  returnsAccepted: boolean
+  returnPeriod?: number
+  returnShippingPaidBy?: string
 }): Promise<Listing | null> {
   try {
     const response = await fetch(`${API_URL}/listings`, {

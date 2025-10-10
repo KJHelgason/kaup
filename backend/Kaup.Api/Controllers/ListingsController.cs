@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Kaup.Api.Data;
 using Kaup.Api.Models;
 using Kaup.Api.DTOs;
+using Kaup.Api.Services;
 
 namespace Kaup.Api.Controllers;
 
@@ -12,11 +13,13 @@ public class ListingsController : ControllerBase
 {
     private readonly KaupDbContext _context;
     private readonly ILogger<ListingsController> _logger;
+    private readonly S3Service _s3Service;
 
-    public ListingsController(KaupDbContext context, ILogger<ListingsController> logger)
+    public ListingsController(KaupDbContext context, ILogger<ListingsController> logger, S3Service s3Service)
     {
         _context = context;
         _logger = logger;
+        _s3Service = s3Service;
     }
 
     [HttpGet]
@@ -72,6 +75,7 @@ public class ListingsController : ControllerBase
                 Category = l.Category,
                 Condition = l.Condition,
                 ImageUrls = l.ImageUrls,
+                ThumbnailUrls = l.ImageUrls.Select(url => _s3Service.GetThumbnailUrl(url)).ToArray(),
                 ListingType = l.ListingType.ToString(),
                 Status = l.Status.ToString(),
                 IsFeatured = l.IsFeatured,
@@ -87,7 +91,17 @@ public class ListingsController : ControllerBase
                     ProfileImageUrl = l.Seller.ProfileImageUrl
                 },
                 BidCount = l.Bids.Count,
-                HighestBid = l.Bids.Any() ? l.Bids.Max(b => b.Amount) : (decimal?)null
+                HighestBid = l.Bids.Any() ? l.Bids.Max(b => b.Amount) : (decimal?)null,
+                Quantity = l.Quantity,
+                QuantitySold = l.QuantitySold,
+                ItemLocation = l.ItemLocation,
+                ShippingCost = l.ShippingCost,
+                ShippingMethod = l.ShippingMethod,
+                HandlingTime = l.HandlingTime,
+                InternationalShipping = l.InternationalShipping,
+                ReturnsAccepted = l.ReturnsAccepted,
+                ReturnPeriod = l.ReturnPeriod,
+                ReturnShippingPaidBy = l.ReturnShippingPaidBy
             })
             .ToList();
 
@@ -119,6 +133,7 @@ public class ListingsController : ControllerBase
             Category = listing.Category,
             Condition = listing.Condition,
             ImageUrls = listing.ImageUrls,
+            ThumbnailUrls = listing.ImageUrls.Select(url => _s3Service.GetThumbnailUrl(url)).ToArray(),
             ListingType = listing.ListingType.ToString(),
             Status = listing.Status.ToString(),
             IsFeatured = listing.IsFeatured,
@@ -134,7 +149,17 @@ public class ListingsController : ControllerBase
                 ProfileImageUrl = listing.Seller.ProfileImageUrl
             },
             BidCount = listing.Bids.Count,
-            HighestBid = listing.Bids.Any() ? listing.Bids.Max(b => b.Amount) : null
+            HighestBid = listing.Bids.Any() ? listing.Bids.Max(b => b.Amount) : null,
+            Quantity = listing.Quantity,
+            QuantitySold = listing.QuantitySold,
+            ItemLocation = listing.ItemLocation,
+            ShippingCost = listing.ShippingCost,
+            ShippingMethod = listing.ShippingMethod,
+            HandlingTime = listing.HandlingTime,
+            InternationalShipping = listing.InternationalShipping,
+            ReturnsAccepted = listing.ReturnsAccepted,
+            ReturnPeriod = listing.ReturnPeriod,
+            ReturnShippingPaidBy = listing.ReturnShippingPaidBy
         };
 
         return Ok(listingDto);
@@ -164,7 +189,17 @@ public class ListingsController : ControllerBase
             AcceptOffers = createDto.AcceptOffers,
             EndDate = createDto.EndDate,
             SellerId = seller.Id,
-            Status = ListingStatus.Active
+            Status = ListingStatus.Active,
+            Quantity = createDto.Quantity,
+            QuantitySold = 0,
+            ItemLocation = createDto.ItemLocation,
+            ShippingCost = createDto.ShippingCost,
+            ShippingMethod = createDto.ShippingMethod,
+            HandlingTime = createDto.HandlingTime,
+            InternationalShipping = createDto.InternationalShipping,
+            ReturnsAccepted = createDto.ReturnsAccepted,
+            ReturnPeriod = createDto.ReturnPeriod,
+            ReturnShippingPaidBy = createDto.ReturnShippingPaidBy
         };
 
         _context.Listings.Add(listing);
@@ -180,6 +215,7 @@ public class ListingsController : ControllerBase
             Category = listing.Category,
             Condition = listing.Condition,
             ImageUrls = listing.ImageUrls,
+            ThumbnailUrls = listing.ImageUrls.Select(url => _s3Service.GetThumbnailUrl(url)).ToArray(),
             ListingType = listing.ListingType.ToString(),
             Status = listing.Status.ToString(),
             IsFeatured = listing.IsFeatured,
@@ -195,7 +231,17 @@ public class ListingsController : ControllerBase
                 ProfileImageUrl = seller.ProfileImageUrl
             },
             BidCount = 0,
-            HighestBid = null
+            HighestBid = null,
+            Quantity = listing.Quantity,
+            QuantitySold = listing.QuantitySold,
+            ItemLocation = listing.ItemLocation,
+            ShippingCost = listing.ShippingCost,
+            ShippingMethod = listing.ShippingMethod,
+            HandlingTime = listing.HandlingTime,
+            InternationalShipping = listing.InternationalShipping,
+            ReturnsAccepted = listing.ReturnsAccepted,
+            ReturnPeriod = listing.ReturnPeriod,
+            ReturnShippingPaidBy = listing.ReturnShippingPaidBy
         };
 
         return CreatedAtAction(nameof(GetListing), new { id = listing.Id }, listingDto);

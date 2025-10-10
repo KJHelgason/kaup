@@ -10,6 +10,7 @@ public class ListingDto
     public string Category { get; set; } = string.Empty;
     public string Condition { get; set; } = string.Empty;
     public string[] ImageUrls { get; set; } = Array.Empty<string>();
+    public string[] ThumbnailUrls { get; set; } = Array.Empty<string>(); // Auto-generated thumbnails
     public string ListingType { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
     public bool IsFeatured { get; set; }
@@ -19,6 +20,22 @@ public class ListingDto
     public SellerDto Seller { get; set; } = null!;
     public int BidCount { get; set; }
     public decimal? HighestBid { get; set; }
+    
+    // Inventory
+    public int Quantity { get; set; }
+    public int QuantitySold { get; set; }
+    
+    // Shipping
+    public string? ItemLocation { get; set; }
+    public decimal ShippingCost { get; set; }
+    public string? ShippingMethod { get; set; }
+    public int? HandlingTime { get; set; }
+    public bool InternationalShipping { get; set; }
+    
+    // Returns
+    public bool ReturnsAccepted { get; set; }
+    public int? ReturnPeriod { get; set; }
+    public string? ReturnShippingPaidBy { get; set; }
 }
 
 public class SellerDto
@@ -44,6 +61,21 @@ public class CreateListingDto
     public bool AcceptOffers { get; set; }
     public DateTime? EndDate { get; set; }
     public Guid SellerId { get; set; }
+    
+    // Inventory
+    public int Quantity { get; set; } = 1;
+    
+    // Shipping
+    public string? ItemLocation { get; set; }
+    public decimal ShippingCost { get; set; } = 0;
+    public string? ShippingMethod { get; set; }
+    public int? HandlingTime { get; set; }
+    public bool InternationalShipping { get; set; } = false;
+    
+    // Returns
+    public bool ReturnsAccepted { get; set; } = false;
+    public int? ReturnPeriod { get; set; }
+    public string? ReturnShippingPaidBy { get; set; }
 }
 
 public class UpdateListingDto

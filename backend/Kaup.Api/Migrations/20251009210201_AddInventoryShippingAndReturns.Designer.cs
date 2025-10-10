@@ -3,6 +3,7 @@ using System;
 using Kaup.Api.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -10,9 +11,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Kaup.Api.Migrations
 {
     [DbContext(typeof(KaupDbContext))]
-    partial class KaupDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251009210201_AddInventoryShippingAndReturns")]
+    partial class AddInventoryShippingAndReturns
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder.HasAnnotation("ProductVersion", "8.0.0");

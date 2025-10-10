@@ -12,7 +12,7 @@ import { updateProfile } from "@/lib/api"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { User, Save, Loader2 } from "lucide-react"
-import { ImageUpload } from "@/components/ImageUpload"
+import { ProfileImageUpload } from "@/components/ProfileImageUpload"
 
 export default function AccountPage() {
   const { t } = useLanguage()
@@ -112,11 +112,10 @@ export default function AccountPage() {
               <form onSubmit={handleSubmit} className="space-y-6">
                 {/* Profile Image */}
                 <div className="space-y-2">
-                  <Label>{t("profileImage")} ({t("optional")})</Label>
-                  <ImageUpload
+                  <Label>{t("profileImage")}</Label>
+                  <ProfileImageUpload
                     currentImage={profileImageUrl}
                     onUpload={setProfileImageUrl}
-                    type="profile"
                   />
                 </div>
 
@@ -128,7 +127,7 @@ export default function AccountPage() {
                     type="text"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    pattern="[a-zA-Z0-9_-]{3,20}"
+                    pattern="[a-zA-Z0-9_\-]{3,20}"
                     title="Username must be 3-20 characters and contain only letters, numbers, underscores, and hyphens"
                     required
                   />
@@ -140,7 +139,7 @@ export default function AccountPage() {
                 {/* Name Fields */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="firstName">{t("firstName")} ({t("optional")})</Label>
+                    <Label htmlFor="firstName">{t("firstName")}</Label>
                     <Input
                       id="firstName"
                       type="text"
@@ -149,7 +148,7 @@ export default function AccountPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="lastName">{t("lastName")} ({t("optional")})</Label>
+                    <Label htmlFor="lastName">{t("lastName")}</Label>
                     <Input
                       id="lastName"
                       type="text"
@@ -174,7 +173,7 @@ export default function AccountPage() {
 
                 {/* Phone Number */}
                 <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">{t("phoneNumber")} ({t("optional")})</Label>
+                  <Label htmlFor="phoneNumber">{t("phoneNumber")}</Label>
                   <Input
                     id="phoneNumber"
                     type="tel"
@@ -186,7 +185,7 @@ export default function AccountPage() {
 
                 {/* Bio */}
                 <div className="space-y-2">
-                  <Label htmlFor="bio">{t("bio")} ({t("optional")})</Label>
+                  <Label htmlFor="bio">{t("bio")}</Label>
                   <Textarea
                     id="bio"
                     value={formData.bio}
@@ -198,7 +197,7 @@ export default function AccountPage() {
 
                 {/* Address */}
                 <div className="space-y-2">
-                  <Label htmlFor="address">{t("address")} ({t("optional")})</Label>
+                  <Label htmlFor="address">{t("address")}</Label>
                   <Input
                     id="address"
                     type="text"
@@ -211,7 +210,7 @@ export default function AccountPage() {
                 {/* City and Postal Code */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="city">{t("city")} ({t("optional")})</Label>
+                    <Label htmlFor="city">{t("city")}</Label>
                     <Input
                       id="city"
                       type="text"
@@ -221,7 +220,7 @@ export default function AccountPage() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="postalCode">{t("postalCode")} ({t("optional")})</Label>
+                    <Label htmlFor="postalCode">{t("postalCode")}</Label>
                     <Input
                       id="postalCode"
                       type="text"

@@ -18,6 +18,22 @@ public class Listing
     public DateTime? EndDate { get; set; }
     public DateTime? UpdatedAt { get; set; }
     
+    // Inventory Management
+    public int Quantity { get; set; } = 1;
+    public int QuantitySold { get; set; } = 0;
+    
+    // Shipping Information
+    public string? ItemLocation { get; set; } // City or region where item is located
+    public decimal ShippingCost { get; set; } = 0; // 0 means free shipping
+    public string? ShippingMethod { get; set; } // "Standard", "Express", "Pickup Only", etc.
+    public int? HandlingTime { get; set; } // Days to ship after purchase
+    public bool InternationalShipping { get; set; } = false;
+    
+    // Return Policy
+    public bool ReturnsAccepted { get; set; } = false;
+    public int? ReturnPeriod { get; set; } // Days (e.g., 30, 60)
+    public string? ReturnShippingPaidBy { get; set; } // "Buyer" or "Seller"
+    
     // Foreign keys
     public Guid SellerId { get; set; }
     public User Seller { get; set; } = null!;

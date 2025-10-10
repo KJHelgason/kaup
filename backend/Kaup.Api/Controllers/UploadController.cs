@@ -81,7 +81,8 @@ public class UploadController : ControllerBase
                 }
             }
 
-            var imageUrls = await _s3Service.UploadMultipleImagesAsync(files, "listings");
+            // Upload with automatic thumbnail generation
+            var imageUrls = await _s3Service.UploadListingImagesWithThumbnailsAsync(files, "listings");
             
             return Ok(new MultipleUploadResponse { Urls = imageUrls });
         }
