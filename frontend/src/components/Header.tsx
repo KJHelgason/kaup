@@ -1,6 +1,6 @@
 "use client"
 
-import { Moon, Sun, Search, User, LogOut, LogIn, UserPlus, Bell, Package, ShoppingCart, Heart, MessageSquare } from "lucide-react"
+import { Moon, Sun, Search, User, LogOut, LogIn, UserPlus, Bell, Package, ShoppingCart, Heart, MessageSquare, ChevronDown } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -17,6 +17,7 @@ import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getNotifications, getUnreadNotificationCount, markNotificationAsRead, markAllNotificationsAsRead, Notification, getCartCount, getUnreadMessageCount, getConversations } from "@/lib/api"
+import { CategoryDropdown } from "@/components/CategoryDropdown"
 
 export function Header() {
   const { theme, setTheme } = useTheme()
@@ -29,6 +30,7 @@ export function Header() {
   const [loadingNotifications, setLoadingNotifications] = useState(false)
   const [cartCount, setCartCount] = useState(0)
   const [unreadConversationCount, setUnreadConversationCount] = useState(0)
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false)
 
   // Fetch unread count
   useEffect(() => {
@@ -143,13 +145,32 @@ export function Header() {
       <div className="container mx-auto px-4 py-4">
         {/* Top Row - Logo, Search, Actions */}
         <div className="flex items-center justify-between gap-4">
-          {/* Logo */}
-          <Link href="/" className="flex items-center space-x-2">
-            <div className="flex items-center justify-center w-10 h-10 bg-primary text-primary-foreground rounded-lg font-bold text-xl">
-              K
+          {/* Logo and Shop by Category */}
+          <div className="flex items-center gap-4">
+            <Link href="/" className="flex items-center space-x-2">
+              <div className="flex items-center justify-center w-10 h-10 bg-primary text-primary-foreground rounded-lg font-bold text-xl">
+                K
+              </div>
+              <span className="text-2xl font-bold hidden sm:inline">Kaup</span>
+            </Link>
+            
+            {/* Shop by Category Button */}
+            <div className="relative hidden lg:block">
+              <Button
+                variant="ghost"
+                onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                className="gap-2"
+              >
+                {t("shopByCategory")}
+                <ChevronDown className={`h-4 w-4 transition-transform ${showCategoryDropdown ? 'rotate-180' : ''}`} />
+              </Button>
+              
+              <CategoryDropdown 
+                isOpen={showCategoryDropdown} 
+                onClose={() => setShowCategoryDropdown(false)} 
+              />
             </div>
-            <span className="text-2xl font-bold hidden sm:inline">Kaup</span>
-          </Link>
+          </div>
 
           {/* Search Bar */}
           <div className="flex-1 max-w-2xl hidden md:flex">

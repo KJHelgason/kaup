@@ -4,6 +4,7 @@ using Kaup.Api.Data;
 using Kaup.Api.Models;
 using Kaup.Api.DTOs;
 using Kaup.Api.Services;
+using System.Text.Json;
 
 namespace Kaup.Api.Controllers;
 
@@ -101,7 +102,10 @@ public class ListingsController : ControllerBase
                 InternationalShipping = l.InternationalShipping,
                 ReturnsAccepted = l.ReturnsAccepted,
                 ReturnPeriod = l.ReturnPeriod,
-                ReturnShippingPaidBy = l.ReturnShippingPaidBy
+                ReturnShippingPaidBy = l.ReturnShippingPaidBy,
+                CategorySpecificFields = !string.IsNullOrEmpty(l.CategorySpecificFieldsJson)
+                    ? JsonSerializer.Deserialize<Dictionary<string, object>>(l.CategorySpecificFieldsJson)
+                    : null
             })
             .ToList();
 
@@ -159,7 +163,10 @@ public class ListingsController : ControllerBase
             InternationalShipping = listing.InternationalShipping,
             ReturnsAccepted = listing.ReturnsAccepted,
             ReturnPeriod = listing.ReturnPeriod,
-            ReturnShippingPaidBy = listing.ReturnShippingPaidBy
+            ReturnShippingPaidBy = listing.ReturnShippingPaidBy,
+            CategorySpecificFields = !string.IsNullOrEmpty(listing.CategorySpecificFieldsJson)
+                ? JsonSerializer.Deserialize<Dictionary<string, object>>(listing.CategorySpecificFieldsJson)
+                : null
         };
 
         return Ok(listingDto);
@@ -199,7 +206,10 @@ public class ListingsController : ControllerBase
             InternationalShipping = createDto.InternationalShipping,
             ReturnsAccepted = createDto.ReturnsAccepted,
             ReturnPeriod = createDto.ReturnPeriod,
-            ReturnShippingPaidBy = createDto.ReturnShippingPaidBy
+            ReturnShippingPaidBy = createDto.ReturnShippingPaidBy,
+            CategorySpecificFieldsJson = createDto.CategorySpecificFields != null 
+                ? JsonSerializer.Serialize(createDto.CategorySpecificFields) 
+                : null
         };
 
         _context.Listings.Add(listing);
@@ -241,7 +251,10 @@ public class ListingsController : ControllerBase
             InternationalShipping = listing.InternationalShipping,
             ReturnsAccepted = listing.ReturnsAccepted,
             ReturnPeriod = listing.ReturnPeriod,
-            ReturnShippingPaidBy = listing.ReturnShippingPaidBy
+            ReturnShippingPaidBy = listing.ReturnShippingPaidBy,
+            CategorySpecificFields = !string.IsNullOrEmpty(listing.CategorySpecificFieldsJson)
+                ? JsonSerializer.Deserialize<Dictionary<string, object>>(listing.CategorySpecificFieldsJson)
+                : null
         };
 
         return CreatedAtAction(nameof(GetListing), new { id = listing.Id }, listingDto);

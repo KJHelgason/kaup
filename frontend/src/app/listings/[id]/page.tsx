@@ -13,6 +13,7 @@ import { Calendar, Package, User, Tag, ChevronLeft, ChevronRight, Trash2, Star, 
 import Image from "next/image"
 import Link from "next/link"
 import { toast } from "sonner"
+import { getCategoryFields, findCategoryField } from "@/lib/categoryFields"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -744,41 +745,161 @@ export default function ListingDetailPage() {
               {/* About Tab */}
               <TabsContent value="about" className="mt-0">
                 <Card className="rounded-tl-none border-t py-0">
-                  <CardContent className="p-6">
-                    {/* Metadata */}
-                    <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="flex items-center gap-2 text-sm">
-                        <Tag className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-muted-foreground">{t("category")}</p>
-                          <p className="font-medium">{t(listing.category)}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Package className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-muted-foreground">{t("condition")}</p>
-                          <p className="font-medium">{listing.condition}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <div>
-                          <p className="text-muted-foreground">{t("listed")}</p>
-                          <p className="font-medium">
-                            {new Date(listing.createdAt).toLocaleDateString('is-IS')}
-                          </p>
-                        </div>
+                  <CardContent className="p-6 space-y-6">
+                    {/* Seller Responsibility Notice & Item Number */}
+                    <div className="flex justify-between items-start text-sm text-muted-foreground">
+                      <span>{t("sellerResponsibility")}</span>
+                      <div className="text-right">
+                        <span>{t("itemNumber")}: </span>
+                        <span className="font-medium">{listing.id}</span>
                       </div>
                     </div>
 
-                    {/* Description */}
-                    <div>
-                      <h3 className="text-sm font-semibold mb-2 text-muted-foreground uppercase">{t("description")}</h3>
-                      <p className="text-muted-foreground whitespace-pre-wrap">
-                        {listing.description}
-                      </p>
+                    {/* Last Updated */}
+                    <div className="text-sm text-muted-foreground -mt-4">
+                      <span>{t("lastUpdated")} {t("on")} </span>
+                      <span className="font-medium">
+                        {new Date(listing.createdAt).toLocaleString('is-IS', {
+                          year: 'numeric',
+                          month: 'short',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </span>
                     </div>
+
+                    {/* Item Specifics Section */}
+                    {listing.categorySpecificFields && Object.keys(listing.categorySpecificFields).length > 0 && (
+                      <div>
+                        <h3 className="text-lg font-semibold mb-4">{t("itemSpecifics")}</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
+                          {/* Condition (always show) */}
+                          <div className="flex border-b border-border pb-2">
+                            <dt className="text-sm font-semibold w-1/2 text-muted-foreground">{t("condition")}</dt>
+                            <dd className="text-sm w-1/2">{listing.condition}</dd>
+                          </div>
+
+                          {/* Seller Notes (if description exists) */}
+                          {listing.description && (
+                            <div className="flex border-b border-border pb-2 md:col-span-2">
+                              <dt className="text-sm font-semibold w-1/4 text-muted-foreground">{t("sellerNotes")}</dt>
+                              <dd className="text-sm w-3/4 italic">
+                                "{listing.description.length > 150 
+                                  ? `${listing.description.substring(0, 150)}...` 
+                                  : listing.description}"
+                              </dd>
+                            </div>
+                          )}
+
+                          {/* Dynamic Category-Specific Fields */}
+                          {Object.entries(listing.categorySpecificFields).map(([fieldName, fieldValue]) => {
+                            // Skip empty values
+                            if (!fieldValue || (Array.isArray(fieldValue) && fieldValue.length === 0)) return null
+                            
+                            // Get field definition to access label and unit (search across all subcategories)
+                            const fieldDef = findCategoryField(listing.category, fieldName)
+                            const label = fieldDef ? t(fieldDef.label) : fieldName
+                            
+                            // Format value based on type
+                            let displayValue = fieldValue
+                            if (Array.isArray(fieldValue)) {
+                              // Multiselect - translate and join
+                              displayValue = fieldValue.map((v: string) => t(v)).join(', ')
+                            } else if (typeof fieldValue === 'boolean') {
+                              displayValue = fieldValue ? t('yes') : t('no')
+                            } else if (typeof fieldValue === 'string') {
+                              // Try to translate if it's a known option
+                              displayValue = t(fieldValue)
+                            }
+                            
+                            // Add unit if exists
+                            if (fieldDef?.unit && !Array.isArray(fieldValue)) {
+                              displayValue = `${displayValue} ${fieldDef.unit}`
+                            }
+
+                            return (
+                              <div key={fieldName} className="flex border-b border-border pb-2">
+                                <dt className="text-sm font-semibold w-1/2 text-muted-foreground">{label}</dt>
+                                <dd className="text-sm w-1/2">{displayValue}</dd>
+                              </div>
+                            )
+                          })}
+
+                          {/* Always show Category, Item Location, Shipping */}
+                          <div className="flex border-b border-border pb-2">
+                            <dt className="text-sm font-semibold w-1/2 text-muted-foreground">{t("category")}</dt>
+                            <dd className="text-sm w-1/2">{t(listing.category)}</dd>
+                          </div>
+                          
+                          {listing.itemLocation && (
+                            <div className="flex border-b border-border pb-2">
+                              <dt className="text-sm font-semibold w-1/2 text-muted-foreground">{t("itemLocation")}</dt>
+                              <dd className="text-sm w-1/2">{listing.itemLocation}</dd>
+                            </div>
+                          )}
+
+                          <div className="flex border-b border-border pb-2">
+                            <dt className="text-sm font-semibold w-1/2 text-muted-foreground">{t("shippingCost")}</dt>
+                            <dd className="text-sm w-1/2">
+                              {listing.shippingCost === 0 
+                                ? t("freeShipping") 
+                                : `${listing.shippingCost.toLocaleString('is-IS')} ${t("currency")}`
+                              }
+                            </dd>
+                          </div>
+
+                          {listing.returnsAccepted && (
+                            <div className="flex border-b border-border pb-2">
+                              <dt className="text-sm font-semibold w-1/2 text-muted-foreground">{t("returns")}</dt>
+                              <dd className="text-sm w-1/2">
+                                {listing.returnPeriod} {t("days")} - {listing.returnShippingPaidBy}
+                              </dd>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Fallback: Show old format if no categorySpecificFields */}
+                    {(!listing.categorySpecificFields || Object.keys(listing.categorySpecificFields).length === 0) && (
+                      <>
+                        {/* Metadata */}
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="flex items-center gap-2 text-sm">
+                            <Tag className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-muted-foreground">{t("category")}</p>
+                              <p className="font-medium">{t(listing.category)}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <Package className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-muted-foreground">{t("condition")}</p>
+                              <p className="font-medium">{listing.condition}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2 text-sm">
+                            <Calendar className="h-4 w-4 text-muted-foreground" />
+                            <div>
+                              <p className="text-muted-foreground">{t("listed")}</p>
+                              <p className="font-medium">
+                                {new Date(listing.createdAt).toLocaleDateString('is-IS')}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Description */}
+                        <div>
+                          <h3 className="text-sm font-semibold mb-2 text-muted-foreground uppercase">{t("description")}</h3>
+                          <p className="text-muted-foreground whitespace-pre-wrap">
+                            {listing.description}
+                          </p>
+                        </div>
+                      </>
+                    )}
                   </CardContent>
                 </Card>
               </TabsContent>

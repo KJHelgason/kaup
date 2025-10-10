@@ -36,6 +36,9 @@ public class ListingDto
     public bool ReturnsAccepted { get; set; }
     public int? ReturnPeriod { get; set; }
     public string? ReturnShippingPaidBy { get; set; }
+    
+    // Category-Specific Fields
+    public Dictionary<string, object>? CategorySpecificFields { get; set; }
 }
 
 public class SellerDto
@@ -76,6 +79,9 @@ public class CreateListingDto
     public bool ReturnsAccepted { get; set; } = false;
     public int? ReturnPeriod { get; set; }
     public string? ReturnShippingPaidBy { get; set; }
+    
+    // Category-Specific Fields
+    public Dictionary<string, object>? CategorySpecificFields { get; set; }
 }
 
 public class UpdateListingDto

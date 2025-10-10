@@ -35,10 +35,13 @@ export interface Listing {
   returnsAccepted: boolean
   returnPeriod?: number
   returnShippingPaidBy?: string
+  categorySpecificFields?: Record<string, any>
 }
 
 export async function getListings(params?: {
   category?: string
+  subcategory?: string
+  subSubcategory?: string
   search?: string
   minPrice?: number
   maxPrice?: number
@@ -170,6 +173,7 @@ export async function createListing(listing: {
   returnsAccepted: boolean
   returnPeriod?: number
   returnShippingPaidBy?: string
+  categorySpecificFields?: Record<string, any>
 }): Promise<Listing | null> {
   try {
     const response = await fetch(`${API_URL}/listings`, {

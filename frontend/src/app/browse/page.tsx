@@ -23,21 +23,184 @@ export default function BrowsePage() {
   // Filter states
   const [searchQuery, setSearchQuery] = useState("")
   const [selectedCategory, setSelectedCategory] = useState("")
+  const [selectedSubcategory, setSelectedSubcategory] = useState("")
+  const [selectedSubSubcategory, setSelectedSubSubcategory] = useState("")
   const [selectedListingType, setSelectedListingType] = useState(searchParams.get('listingType') || "")
   const [minPrice, setMinPrice] = useState("")
   const [maxPrice, setMaxPrice] = useState("")
   const [showFilters, setShowFilters] = useState(false)
 
   const categories = [
-    "Rafeindatækni", // Electronics
-    "Tíska", // Fashion
-    "Heimili", // Home
-    "Íþróttir", // Sports
-    "Farartæki", // Vehicles
-    "Bækur", // Books
-    "Leikföng", // Toys
-    "Garður", // Garden
-    "Annað" // Other
+    { 
+      value: "Rafeindatækni", 
+      label: "Rafeindatækni",
+      subcategories: [
+        { value: "Símar og spjaldtölvur", subSubcategories: ["Snjallsímar", "Spjaldtölvur", "Símahlífar og fylgihlutir", "Hleðslutæki", "Annað"] },
+        { value: "Tölvur", subSubcategories: ["Fartölvur", "Borðtölvur", "Tölvuskjáir", "Tölvuhlutir", "Lyklaborð og mýs", "Annað"] },
+        { value: "Myndavélar", subSubcategories: ["Stafrænar myndavélar", "Linsa", "Þríróður og búnaður", "Myndavélarhlífar", "Annað"] },
+        { value: "Hljóðbúnaður", subSubcategories: ["Heyrnartól", "Hátalara", "Hljómtæki", "Hljóðkerfisbúnaður", "Annað"] },
+        { value: "Tölvuleikir & Leikjatölvur", subSubcategories: ["PlayStation", "Xbox", "Nintendo", "Leikir", "Fylgihlutir", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Tíska", 
+      label: "Tíska",
+      subcategories: [
+        { value: "Föt - Karlar", subSubcategories: ["Jakkar og kápur", "Bolir og skyrtur", "Buxur", "Jakkafatnaður", "Íþróttafatnaður", "Annað"] },
+        { value: "Föt - Konur", subSubcategories: ["Kjólar", "Bolir og toppar", "Buxur", "Pils", "Jakkar", "Annað"] },
+        { value: "Föt - Börn", subSubcategories: ["Drengir", "Stúlkur", "Ungbörn", "Annað"] },
+        { value: "Skór", subSubcategories: ["Karlaskór", "Kvennaskór", "Barnaskór", "Íþróttaskór", "Stígvél", "Annað"] },
+        { value: "Fylgihlutir", subSubcategories: ["Töskur og veski", "Hattar", "Belti", "Sjal og treflar", "Hanskar", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Heimili & Garður", 
+      label: "Heimili & Garður",
+      subcategories: [
+        { value: "Húsgögn", subSubcategories: ["Sófar og stólar", "Borð", "Rúm", "Skápar", "Hillur", "Annað"] },
+        { value: "Eldhúsbúnaður", subSubcategories: ["Pottaefni", "Borðbúnaður", "Smátæki", "Geymsla", "Annað"] },
+        { value: "Skraut", subSubcategories: ["Veggskraut", "Kerti", "Púðar", "Teppi", "Ljós", "Annað"] },
+        { value: "Verkfæri", subSubcategories: ["Rafverkfæri", "Handverkfæri", "Málningarbúnaður", "Mælikvarðar", "Annað"] },
+        { value: "Garðyrkja", subSubcategories: ["Garðverkfæri", "Pottur og krukk", "Fræ og plöntur", "Sláttuvélar", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Íþróttir & Útivist", 
+      label: "Íþróttir & Útivist",
+      subcategories: [
+        { value: "Líkamsræktarbúnaður", subSubcategories: ["Lóð og búnaður", "Jógabúnaður", "Hjólreiðaþjálfar", "Hlaupaborð", "Annað"] },
+        { value: "Hjól", subSubcategories: ["Götuhjól", "Fjallahjól", "Rafmagnshjól", "Börn hjól", "Fylgihlutir", "Annað"] },
+        { value: "Útivistarfatnaður", subSubcategories: ["Göngufatnaður", "Gönguskór", "Bakpokar", "Tjöld", "Svefnpokar", "Annað"] },
+        { value: "Íþróttafatnaður", subSubcategories: ["Hlaupafatnaður", "Íþróttaskór", "Æfingarfatnaður", "Sundföt", "Annað"] },
+        { value: "Gönguskíði", subSubcategories: ["Alförin skíði", "Borðskíði", "Skíðastafir", "Hjálmar", "Gleraugu", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Farartæki", 
+      label: "Farartæki",
+      subcategories: [
+        { value: "Bílar", subSubcategories: ["Fólksbílar", "Jeppar", "Sportbílar", "Húsbílar", "Annað"] },
+        { value: "Mótorhjól", subSubcategories: ["Götuhjól", "Krosshjól", "Vespuhjól", "Fjórhjól", "Annað"] },
+        { value: "Hjólhýsi", subSubcategories: ["Tjaldvagnar", "Húsbílahúsgögn", "Annað"] },
+        { value: "Varahlutir", subSubcategories: ["Hjól og dekk", "Hljóðkerfi", "Ljós", "Innri hlutir", "Ytri hlutir", "Annað"] },
+        { value: "Fylgihlutir", subSubcategories: ["GPS og hleðsla", "Bifreiðaskraut", "Hreinsiefni", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Bækur, Kvikmyndir & Tónlist", 
+      label: "Bækur, Kvikmyndir & Tónlist",
+      subcategories: [
+        { value: "Bækur", subSubcategories: ["Skáldsögur", "Barnabækur", "Námsbækur", "Ævisögur", "Matreiðslubækur", "Annað"] },
+        { value: "Geisladiskar", subSubcategories: ["Kvikmyndir - DVD", "Kvikmyndir - Blu-ray", "Tónlist - CD", "Leikir", "Annað"] },
+        { value: "Vínylplötur", subSubcategories: ["Rokk", "Popp", "Jazz", "Klassík", "Annað"] },
+        { value: "Hljóðfæri", subSubcategories: ["Gítarar", "Píanó og hljómborð", "Trommur", "Strengir", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Leikföng & Barnabúnaður", 
+      label: "Leikföng & Barnabúnaður",
+      subcategories: [
+        { value: "Leikföng", subSubcategories: ["LEGO og byggingarkubbar", "Dúkkur", "Tölvuleikjaleikföng", "Bílar og vélar", "Spil", "Annað"] },
+        { value: "Barnavagnar", subSubcategories: ["Göngukerru", "Kerrur", "Tvíburavagnar", "Fylgihlutir", "Annað"] },
+        { value: "Barnastólar", subSubcategories: ["Hásæti", "Bílstólar", "Vaggsófar", "Annað"] },
+        { value: "Barnafatnaður", subSubcategories: ["Ungbörn (0-2 ára)", "Smábörn (2-5 ára)", "Börn (6+ ára)", "Skór", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Heilsa & Snyrtivörur", 
+      label: "Heilsa & Snyrtivörur",
+      subcategories: [
+        { value: "Snyrtivörur", subSubcategories: ["Förðun", "Neglur", "Ilmvatn", "Tól", "Annað"] },
+        { value: "Húðvörur", subSubcategories: ["Andlitskrem", "Húðhreinsivörur", "Sólarvörn", "Annað"] },
+        { value: "Heilsuvörur", subSubcategories: ["Vítamín", "Næringarefni", "Fyrstu hjálp", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Safngripir & List", 
+      label: "Safngripir & List",
+      subcategories: [
+        { value: "Listaverk", subSubcategories: ["Málverk", "Myndir", "Skúlptúrar", "Annað"] },
+        { value: "Fornmunir", subSubcategories: ["Húsgögn", "Skartgripir", "Myntir", "Annað"] },
+        { value: "Safnkort", subSubcategories: ["Íþróttakort", "Pokémon", "Magic", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Gæludýravörur", 
+      label: "Gæludýravörur",
+      subcategories: [
+        { value: "Hundavörur", subSubcategories: ["Hundfóður", "Leikföng", "Beð", "Hálsbönd og taumar", "Annað"] },
+        { value: "Kattavörur", subSubcategories: ["Kattafóður", "Húsgögn", "Leikföng", "Sandkassar", "Annað"] },
+        { value: "Fiskar & Búnaður", subSubcategories: ["Fiskabúr", "Síur", "Búnaður", "Fiskur", "Annað"] },
+        { value: "Fuglabúnaður", subSubcategories: ["Búr", "Fóður", "Leikföng", "Annað"] },
+        { value: "Smádýr", subSubcategories: ["Búr", "Fóður", "Annað"] },
+        { value: "Skriðdýr", subSubcategories: ["Terrarium", "Hiti og ljós", "Fóður", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Skartgripir & Úr", 
+      label: "Skartgripir & Úr",
+      subcategories: [
+        { value: "Úr", subSubcategories: ["Karlaúr", "Kvennaúr", "Snjallúr", "Fylgihlutir", "Annað"] },
+        { value: "Fínlegir skartgripir", subSubcategories: ["Hringir", "Hálsmen", "Armbönd", "Eyrnalokkar", "Annað"] },
+        { value: "Tískuskartgripir", subSubcategories: ["Hringir", "Hálsmen", "Armbönd", "Eyrnalokkar", "Annað"] },
+        { value: "Fornir skartgripir", subSubcategories: ["Hringir", "Broskar", "Hálsmen", "Annað"] },
+        { value: "Karlaskartgripir", subSubcategories: ["Hringir", "Armbönd", "Hálsmen", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Fyrirtæki & Iðnaður", 
+      label: "Fyrirtæki & Iðnaður",
+      subcategories: [
+        { value: "Veitingahúsabúnaður", subSubcategories: ["Eldhúsbúnaður", "Borðbúnaður", "Kælibúnaður", "Annað"] },
+        { value: "Heilbrigðisbúnaður", subSubcategories: ["Læknistæki", "Rannsóknarfæri", "Annað"] },
+        { value: "Þungavinnuvélar", subSubcategories: ["Gröfur", "Lyftarar", "Vélar", "Annað"] },
+        { value: "Rafbúnaður", subSubcategories: ["Strengir og kabal", "Rofa", "Ljós", "Annað"] },
+        { value: "Skrifstofubúnaður", subSubcategories: ["Prentarar", "Pappír", "Húsgögn", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Miðar & Ferðalög", 
+      label: "Miðar & Ferðalög",
+      subcategories: [
+        { value: "Tónleikamiðar", subSubcategories: ["Rokk og Popp", "Klassík", "Jazz", "Annað"] },
+        { value: "Íþróttamiðar", subSubcategories: ["Fótbolti", "Körfubolti", "Handbolti", "Annað"] },
+        { value: "Viðburðamiðar", subSubcategories: ["Leikhús", "Stand-up", "Viðburðir", "Annað"] },
+        { value: "Ferðapakkar", subSubcategories: ["Flug og hótel", "Rútupakkar", "Annað"] },
+        { value: "Farangur", subSubcategories: ["Ferðatöskur", "Bakpokar", "Handtöskur", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Þjónusta", 
+      label: "Þjónusta",
+      subcategories: [
+        { value: "Uppboðsþjónusta", subSubcategories: ["Skráning", "Ljósmyndun", "Annað"] },
+        { value: "Vef & Tölvuþjónusta", subSubcategories: ["Vefhönnun", "Forritun", "Tölvuviðgerðir", "Annað"] },
+        { value: "Prentun", subSubcategories: ["Nafnspjöld", "Merki", "Annað"] },
+        { value: "Viðgerðarþjónusta", subSubcategories: ["Tölvur", "Símar", "Annað"] },
+        { value: "Listaþjónusta", subSubcategories: ["Ljósmyndun", "Hönnun", "Annað"] },
+        { value: "Annað", subSubcategories: [] }
+      ]
+    },
+    { 
+      value: "Annað", 
+      label: "Annað",
+      subcategories: [
+        { value: "Annað", subSubcategories: [] }
+      ]
+    }
   ]
 
   const loadListings = useCallback(async () => {
@@ -45,6 +208,8 @@ export default function BrowsePage() {
     const result = await getListings({
       search: searchQuery || undefined,
       category: selectedCategory || undefined,
+      subcategory: selectedSubcategory || undefined,
+      subSubcategory: selectedSubSubcategory || undefined,
       listingType: selectedListingType || undefined,
       minPrice: minPrice ? parseFloat(minPrice) : undefined,
       maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
@@ -54,7 +219,7 @@ export default function BrowsePage() {
     setListings(result.listings)
     setTotalCount(result.totalCount)
     setLoading(false)
-  }, [currentPage, searchQuery, selectedCategory, selectedListingType, minPrice, maxPrice])
+  }, [currentPage, searchQuery, selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedListingType, minPrice, maxPrice])
 
   useEffect(() => {
     loadListings()
@@ -69,13 +234,15 @@ export default function BrowsePage() {
   function clearFilters() {
     setSearchQuery("")
     setSelectedCategory("")
+    setSelectedSubcategory("")
+    setSelectedSubSubcategory("")
     setMinPrice("")
     setMaxPrice("")
     setCurrentPage(1)
   }
 
   const totalPages = Math.ceil(totalCount / pageSize)
-  const hasActiveFilters = searchQuery || selectedCategory || minPrice || maxPrice
+  const hasActiveFilters = searchQuery || selectedCategory || selectedSubcategory || selectedSubSubcategory || minPrice || maxPrice
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -138,10 +305,12 @@ export default function BrowsePage() {
               {/* Category Filter */}
               <div className="mb-6">
                 <Label className="mb-2 block">{t("category")}</Label>
-                <div className="space-y-2">
+                <div className="space-y-1">
                   <button
                     onClick={() => {
                       setSelectedCategory("")
+                      setSelectedSubcategory("")
+                      setSelectedSubSubcategory("")
                       setCurrentPage(1)
                     }}
                     className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
@@ -152,21 +321,102 @@ export default function BrowsePage() {
                   >
                     {t("allCategories")}
                   </button>
+                  
                   {categories.map((category) => (
-                    <button
-                      key={category}
-                      onClick={() => {
-                        setSelectedCategory(category)
-                        setCurrentPage(1)
-                      }}
-                      className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                        selectedCategory === category
-                          ? 'bg-primary text-primary-foreground'
-                          : 'hover:bg-muted'
-                      }`}
-                    >
-                      {t(category)}
-                    </button>
+                    <div key={category.value}>
+                      {/* Main Category Button */}
+                      <button
+                        onClick={() => {
+                          setSelectedCategory(category.value)
+                          setSelectedSubcategory("")
+                          setSelectedSubSubcategory("")
+                          setCurrentPage(1)
+                        }}
+                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
+                          selectedCategory === category.value
+                            ? 'bg-primary text-primary-foreground'
+                            : 'hover:bg-muted'
+                        }`}
+                      >
+                        {t(category.value)}
+                      </button>
+                      
+                      {/* Subcategories - shown directly below if this category is selected */}
+                      {selectedCategory === category.value && category.subcategories.length > 0 && (
+                        <div className="ml-4 mt-1 space-y-1 border-l-2 border-primary/20 pl-2">
+                          <button
+                            onClick={() => {
+                              setSelectedSubcategory("")
+                              setSelectedSubSubcategory("")
+                              setCurrentPage(1)
+                            }}
+                            className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors ${
+                              !selectedSubcategory
+                                ? 'bg-primary/10 text-primary font-medium'
+                                : 'hover:bg-muted'
+                            }`}
+                          >
+                            {t("all")}
+                          </button>
+                          
+                          {category.subcategories.map((subcat) => (
+                            <div key={subcat.value}>
+                              {/* Subcategory Button */}
+                              <button
+                                onClick={() => {
+                                  setSelectedSubcategory(subcat.value)
+                                  setSelectedSubSubcategory("")
+                                  setCurrentPage(1)
+                                }}
+                                className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors ${
+                                  selectedSubcategory === subcat.value
+                                    ? 'bg-primary/10 text-primary font-medium'
+                                    : 'hover:bg-muted'
+                                }`}
+                              >
+                                {t(subcat.value)}
+                              </button>
+                              
+                              {/* Sub-subcategories - shown directly below if this subcategory is selected */}
+                              {selectedSubcategory === subcat.value && subcat.subSubcategories.length > 0 && (
+                                <div className="ml-4 mt-1 space-y-1 border-l-2 border-primary/10 pl-2">
+                                  <button
+                                    onClick={() => {
+                                      setSelectedSubSubcategory("")
+                                      setCurrentPage(1)
+                                    }}
+                                    className={`w-full text-left px-2 py-1 rounded-md text-xs transition-colors ${
+                                      !selectedSubSubcategory
+                                        ? 'bg-primary/5 text-primary font-medium'
+                                        : 'hover:bg-muted'
+                                    }`}
+                                  >
+                                    {t("all")}
+                                  </button>
+                                  
+                                  {subcat.subSubcategories.map((ssc) => (
+                                    <button
+                                      key={ssc}
+                                      onClick={() => {
+                                        setSelectedSubSubcategory(ssc)
+                                        setCurrentPage(1)
+                                      }}
+                                      className={`w-full text-left px-2 py-1 rounded-md text-xs transition-colors ${
+                                        selectedSubSubcategory === ssc
+                                          ? 'bg-primary/5 text-primary font-medium'
+                                          : 'hover:bg-muted'
+                                      }`}
+                                    >
+                                      {t(ssc)}
+                                    </button>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   ))}
                 </div>
               </div>

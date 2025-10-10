@@ -34,6 +34,9 @@ public class Listing
     public int? ReturnPeriod { get; set; } // Days (e.g., 30, 60)
     public string? ReturnShippingPaidBy { get; set; } // "Buyer" or "Seller"
     
+    // Category-Specific Fields (Item Specifics)
+    public string? CategorySpecificFieldsJson { get; set; } // JSON string of category-specific fields
+    
     // Foreign keys
     public Guid SellerId { get; set; }
     public User Seller { get; set; } = null!;

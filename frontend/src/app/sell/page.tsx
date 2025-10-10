@@ -12,6 +12,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Package, Truck, RefreshCw, Info } from "lucide-react"
 import { MultipleImageUpload } from "@/components/MultipleImageUpload"
+import { getCategoryFields, CategoryField } from "@/lib/categoryFields"
 
 export default function SellPage() {
   const { t } = useLanguage()
@@ -33,6 +34,8 @@ export default function SellPage() {
   const [price, setPrice] = useState("")
   const [buyNowPrice, setBuyNowPrice] = useState("")
   const [category, setCategory] = useState("")
+  const [subcategory, setSubcategory] = useState("")
+  const [subSubcategory, setSubSubcategory] = useState("")
   const [condition, setCondition] = useState("")
   const [listingType, setListingType] = useState("BuyNow")
   const [endDate, setEndDate] = useState("")
@@ -53,20 +56,433 @@ export default function SellPage() {
   const [returnsAccepted, setReturnsAccepted] = useState(false)
   const [returnPeriod, setReturnPeriod] = useState("30")
   const [returnShippingPaidBy, setReturnShippingPaidBy] = useState("Buyer")
+  
+  // Form state - Category-specific fields (Item Specifics)
+  const [categorySpecificFields, setCategorySpecificFields] = useState<Record<string, any>>({})
+  
+  // Get category-specific fields based on selected category/subcategory/sub-subcategory
+  const specificFields = getCategoryFields(category, subcategory, subSubcategory)
+
+  // Reset category-specific fields when category, subcategory, or sub-subcategory changes
+  useEffect(() => {
+    setCategorySpecificFields({})
+  }, [category, subcategory, subSubcategory])
 
   const categories = [
-    "Rafeindatækni",
-    "Tíska",
-    "Heimili",
-    "Íþróttir",
-    "Farartæki",
-    "Bækur",
-    "Leikföng",
-    "Garður",
-    "Annað"
+    { 
+      value: "Rafeindatækni", 
+      label: "Rafeindatækni",
+      subcategories: [
+        { 
+          value: "Símar og spjaldtölvur", 
+          subSubcategories: ["Snjallsímar", "Spjaldtölvur", "Símahlífar og fylgihlutir", "Hleðslutæki", "Annað"]
+        },
+        { 
+          value: "Tölvur", 
+          subSubcategories: ["Fartölvur", "Borðtölvur", "Tölvuskjáir", "Tölvuhlutir", "Lyklaborð og mýs", "Annað"]
+        },
+        { 
+          value: "Myndavélar", 
+          subSubcategories: ["Stafrænar myndavélar", "Linsa", "Þríróður og búnaður", "Myndavélarhlífar", "Annað"]
+        },
+        { 
+          value: "Hljóðbúnaður", 
+          subSubcategories: ["Heyrnartól", "Hátalara", "Hljómtæki", "Hljóðkerfisbúnaður", "Annað"]
+        },
+        { 
+          value: "Tölvuleikir & Leikjatölvur", 
+          subSubcategories: ["PlayStation", "Xbox", "Nintendo", "Leikir", "Fylgihlutir", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Tíska", 
+      label: "Tíska",
+      subcategories: [
+        { 
+          value: "Föt - Karlar", 
+          subSubcategories: ["Jakkar og kápur", "Bolir og skyrtur", "Buxur", "Jakkafatnaður", "Íþróttafatnaður", "Annað"]
+        },
+        { 
+          value: "Föt - Konur", 
+          subSubcategories: ["Kjólar", "Bolir og toppar", "Buxur", "Pils", "Jakkar", "Annað"]
+        },
+        { 
+          value: "Föt - Börn", 
+          subSubcategories: ["Drengir", "Stúlkur", "Ungbörn", "Annað"]
+        },
+        { 
+          value: "Skór", 
+          subSubcategories: ["Karlaskór", "Kvennaskór", "Barnaskór", "Íþróttaskór", "Stígvél", "Annað"]
+        },
+        { 
+          value: "Fylgihlutir", 
+          subSubcategories: ["Töskur og veski", "Hattar", "Belti", "Sjal og treflar", "Hanskar", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Heimili & Garður", 
+      label: "Heimili & Garður",
+      subcategories: [
+        { 
+          value: "Húsgögn", 
+          subSubcategories: ["Sófar og stólar", "Borð", "Rúm", "Skápar", "Hillur", "Annað"]
+        },
+        { 
+          value: "Eldhúsbúnaður", 
+          subSubcategories: ["Pottaefni", "Borðbúnaður", "Smátæki", "Geymsla", "Annað"]
+        },
+        { 
+          value: "Skraut", 
+          subSubcategories: ["Veggskraut", "Kerti", "Púðar", "Teppi", "Ljós", "Annað"]
+        },
+        { 
+          value: "Verkfæri", 
+          subSubcategories: ["Rafverkfæri", "Handverkfæri", "Málningarbúnaður", "Mælikvarðar", "Annað"]
+        },
+        { 
+          value: "Garðyrkja", 
+          subSubcategories: ["Garðverkfæri", "Pottur og krukk", "Fræ og plöntur", "Sláttuvélar", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Íþróttir & Útivist", 
+      label: "Íþróttir & Útivist",
+      subcategories: [
+        { 
+          value: "Líkamsræktarbúnaður", 
+          subSubcategories: ["Lóð og búnaður", "Jógabúnaður", "Hjólreiðaþjálfar", "Hlaupaborð", "Annað"]
+        },
+        { 
+          value: "Hjól", 
+          subSubcategories: ["Götuhjól", "Fjallahjól", "Rafmagnshjól", "Börn hjól", "Fylgihlutir", "Annað"]
+        },
+        { 
+          value: "Útivistarfatnaður", 
+          subSubcategories: ["Göngufatnaður", "Gönguskór", "Bakpokar", "Tjöld", "Svefnpokar", "Annað"]
+        },
+        { 
+          value: "Íþróttafatnaður", 
+          subSubcategories: ["Hlaupafatnaður", "Íþróttaskór", "Æfingarfatnaður", "Sundföt", "Annað"]
+        },
+        { 
+          value: "Gönguskíði", 
+          subSubcategories: ["Alförin skíði", "Borðskíði", "Skíðastafir", "Hjálmar", "Gleraugu", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Farartæki", 
+      label: "Farartæki",
+      subcategories: [
+        { 
+          value: "Bílar", 
+          subSubcategories: ["Fólksbílar", "Jeppar", "Sportbílar", "Húsbílar", "Annað"]
+        },
+        { 
+          value: "Mótorhjól", 
+          subSubcategories: ["Götuhjól", "Krosshjól", "Vespuhjól", "Fjórhjól", "Annað"]
+        },
+        { 
+          value: "Hjólhýsi", 
+          subSubcategories: ["Tjaldvagnar", "Húsbílahúsgögn", "Annað"]
+        },
+        { 
+          value: "Varahlutir", 
+          subSubcategories: ["Hjól og dekk", "Hljóðkerfi", "Ljós", "Innri hlutir", "Ytri hlutir", "Annað"]
+        },
+        { 
+          value: "Fylgihlutir", 
+          subSubcategories: ["GPS og hleðsla", "Bifreiðaskraut", "Hreinsiefni", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Bækur, Kvikmyndir & Tónlist", 
+      label: "Bækur, Kvikmyndir & Tónlist",
+      subcategories: [
+        { 
+          value: "Bækur", 
+          subSubcategories: ["Skáldsögur", "Barnabækur", "Námsbækur", "Ævisögur", "Matreiðslubækur", "Annað"]
+        },
+        { 
+          value: "Geisladiskar", 
+          subSubcategories: ["Kvikmyndir - DVD", "Kvikmyndir - Blu-ray", "Tónlist - CD", "Leikir", "Annað"]
+        },
+        { 
+          value: "Vínylplötur", 
+          subSubcategories: ["Rokk", "Popp", "Jazz", "Klassík", "Annað"]
+        },
+        { 
+          value: "Hljóðfæri", 
+          subSubcategories: ["Gítarar", "Píanó og hljómborð", "Trommur", "Strengir", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Leikföng & Barnabúnaður", 
+      label: "Leikföng & Barnabúnaður",
+      subcategories: [
+        { 
+          value: "Leikföng", 
+          subSubcategories: ["LEGO og byggingarkubbar", "Dúkkur", "Tölvuleikjaleikföng", "Bílar og vélar", "Spil", "Annað"]
+        },
+        { 
+          value: "Barnavagnar", 
+          subSubcategories: ["Göngukerru", "Kerrur", "Tvíburavagnar", "Fylgihlutir", "Annað"]
+        },
+        { 
+          value: "Barnastólar", 
+          subSubcategories: ["Hásæti", "Bílstólar", "Vaggsófar", "Annað"]
+        },
+        { 
+          value: "Barnafatnaður", 
+          subSubcategories: ["Ungbörn (0-2 ára)", "Smábörn (2-5 ára)", "Börn (6+ ára)", "Skór", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Heilsa & Snyrtivörur", 
+      label: "Heilsa & Snyrtivörur",
+      subcategories: [
+        { 
+          value: "Snyrtivörur", 
+          subSubcategories: ["Förðun", "Neglur", "Ilmvatn", "Tól", "Annað"]
+        },
+        { 
+          value: "Húðvörur", 
+          subSubcategories: ["Andlitskrem", "Húðhreinsivörur", "Sólarvörn", "Annað"]
+        },
+        { 
+          value: "Heilsuvörur", 
+          subSubcategories: ["Vítamín", "Næringarefni", "Fyrstu hjálp", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Safngripir & List", 
+      label: "Safngripir & List",
+      subcategories: [
+        { 
+          value: "Listaverk", 
+          subSubcategories: ["Málverk", "Myndir", "Skúlptúrar", "Annað"]
+        },
+        { 
+          value: "Fornmunir", 
+          subSubcategories: ["Húsgögn", "Skartgripir", "Myntir", "Annað"]
+        },
+        { 
+          value: "Safnkort", 
+          subSubcategories: ["Íþróttakort", "Pokémon", "Magic", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Gæludýravörur", 
+      label: "Gæludýravörur",
+      subcategories: [
+        { 
+          value: "Hundavörur", 
+          subSubcategories: ["Hundfóður", "Leikföng", "Beð", "Hálsbönd og taumar", "Annað"]
+        },
+        { 
+          value: "Kattavörur", 
+          subSubcategories: ["Kattafóður", "Húsgögn", "Leikföng", "Sandkassar", "Annað"]
+        },
+        { 
+          value: "Fiskar & Búnaður", 
+          subSubcategories: ["Fiskabúr", "Síur", "Búnaður", "Fiskur", "Annað"]
+        },
+        { 
+          value: "Fuglabúnaður", 
+          subSubcategories: ["Búr", "Fóður", "Leikföng", "Annað"]
+        },
+        { 
+          value: "Smádýr", 
+          subSubcategories: ["Búr", "Fóður", "Annað"]
+        },
+        { 
+          value: "Skriðdýr", 
+          subSubcategories: ["Terrarium", "Hiti og ljós", "Fóður", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Skartgripir & Úr", 
+      label: "Skartgripir & Úr",
+      subcategories: [
+        { 
+          value: "Úr", 
+          subSubcategories: ["Karlaúr", "Kvennaúr", "Snjallúr", "Fylgihlutir", "Annað"]
+        },
+        { 
+          value: "Fínlegir skartgripir", 
+          subSubcategories: ["Hringir", "Hálsmen", "Armbönd", "Eyrnalokkar", "Annað"]
+        },
+        { 
+          value: "Tískuskartgripir", 
+          subSubcategories: ["Hringir", "Hálsmen", "Armbönd", "Eyrnalokkar", "Annað"]
+        },
+        { 
+          value: "Fornir skartgripir", 
+          subSubcategories: ["Hringir", "Broskar", "Hálsmen", "Annað"]
+        },
+        { 
+          value: "Karlaskartgripir", 
+          subSubcategories: ["Hringir", "Armbönd", "Hálsmen", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Fyrirtæki & Iðnaður", 
+      label: "Fyrirtæki & Iðnaður",
+      subcategories: [
+        { 
+          value: "Veitingahúsabúnaður", 
+          subSubcategories: ["Eldhúsbúnaður", "Borðbúnaður", "Kælibúnaður", "Annað"]
+        },
+        { 
+          value: "Heilbrigðisbúnaður", 
+          subSubcategories: ["Læknistæki", "Rannsóknarfæri", "Annað"]
+        },
+        { 
+          value: "Þungavinnuvélar", 
+          subSubcategories: ["Gröfur", "Lyftarar", "Vélar", "Annað"]
+        },
+        { 
+          value: "Rafbúnaður", 
+          subSubcategories: ["Strengir og kapal", "Rofa", "Ljós", "Annað"]
+        },
+        { 
+          value: "Skrifstofubúnaður", 
+          subSubcategories: ["Prentarar", "Pappír", "Húsgögn", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Miðar & Ferðalög", 
+      label: "Miðar & Ferðalög",
+      subcategories: [
+        { 
+          value: "Tónleikamiðar", 
+          subSubcategories: ["Rokk og Popp", "Klassík", "Jazz", "Annað"]
+        },
+        { 
+          value: "Íþróttamiðar", 
+          subSubcategories: ["Fótbolti", "Körfubolti", "Handbolti", "Annað"]
+        },
+        { 
+          value: "Viðburðamiðar", 
+          subSubcategories: ["Leikhús", "Stand-up", "Viðburðir", "Annað"]
+        },
+        { 
+          value: "Ferðapakkar", 
+          subSubcategories: ["Flug og hótel", "Rútupakkar", "Annað"]
+        },
+        { 
+          value: "Farangur", 
+          subSubcategories: ["Ferðatöskur", "Bakpokar", "Handtöskur", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Þjónusta", 
+      label: "Þjónusta",
+      subcategories: [
+        { 
+          value: "Uppboðsþjónusta", 
+          subSubcategories: ["Skráning", "Ljósmyndun", "Annað"]
+        },
+        { 
+          value: "Vef & Tölvuþjónusta", 
+          subSubcategories: ["Vefhönnun", "Forritun", "Tölvuviðgerðir", "Annað"]
+        },
+        { 
+          value: "Prentun", 
+          subSubcategories: ["Nafnspjöld", "Merki", "Annað"]
+        },
+        { 
+          value: "Viðgerðarþjónusta", 
+          subSubcategories: ["Tölvur", "Símar", "Annað"]
+        },
+        { 
+          value: "Listaþjónusta", 
+          subSubcategories: ["Ljósmyndun", "Hönnun", "Annað"]
+        },
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    },
+    { 
+      value: "Annað", 
+      label: "Annað",
+      subcategories: [
+        { 
+          value: "Annað", 
+          subSubcategories: []
+        }
+      ]
+    }
   ]
 
   const conditions = [
+    { value: "Brand New", labelKey: "conditionBrandNew" },
     { value: "New", labelKey: "conditionNew" },
     { value: "Like New", labelKey: "conditionLikeNew" },
     { value: "Good", labelKey: "conditionGood" },
@@ -131,6 +547,16 @@ export default function SellPage() {
       return
     }
 
+    // Validate required category-specific fields
+    const requiredFields = specificFields.filter(field => field.required)
+    for (const field of requiredFields) {
+      if (!categorySpecificFields[field.name] || 
+          (Array.isArray(categorySpecificFields[field.name]) && categorySpecificFields[field.name].length === 0)) {
+        setError(`${t(field.label)} ${t("isRequired")}`)
+        return
+      }
+    }
+
     if (!user) {
       setError(t("loginRequired"))
       return
@@ -160,7 +586,8 @@ export default function SellPage() {
         internationalShipping: internationalShipping,
         returnsAccepted: returnsAccepted,
         returnPeriod: returnsAccepted ? parseInt(returnPeriod) : undefined,
-        returnShippingPaidBy: returnsAccepted ? returnShippingPaidBy : undefined
+        returnShippingPaidBy: returnsAccepted ? returnShippingPaidBy : undefined,
+        categorySpecificFields: Object.keys(categorySpecificFields).length > 0 ? categorySpecificFields : undefined
       })
 
       // Redirect to the new listing
@@ -249,13 +676,17 @@ export default function SellPage() {
                       id="category"
                       className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       value={category}
-                      onChange={(e) => setCategory(e.target.value)}
+                      onChange={(e) => {
+                        setCategory(e.target.value)
+                        setSubcategory("") // Reset subcategory when main category changes
+                        setSubSubcategory("") // Reset sub-subcategory when main category changes
+                      }}
                       required
                     >
                       <option value="">{t("selectCategory")}</option>
                       {categories.map((cat) => (
-                        <option key={cat} value={cat}>
-                          {t(cat)}
+                        <option key={cat.value} value={cat.value}>
+                          {t(cat.value)}
                         </option>
                       ))}
                     </select>
@@ -281,6 +712,182 @@ export default function SellPage() {
                     </select>
                   </div>
                 </div>
+
+                {/* Subcategory - shown only when category is selected and has subcategories */}
+                {category && categories.find(c => c.value === category)?.subcategories && categories.find(c => c.value === category)!.subcategories.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="subcategory">
+                      {t("subcategory")} ({t("optional")})
+                    </Label>
+                    <select
+                      id="subcategory"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={subcategory}
+                      onChange={(e) => {
+                        setSubcategory(e.target.value)
+                        setSubSubcategory("") // Reset sub-subcategory when subcategory changes
+                      }}
+                    >
+                      <option value="">{t("selectSubcategory")}</option>
+                      {categories.find(c => c.value === category)!.subcategories.map((subcat) => (
+                        <option key={subcat.value} value={subcat.value}>
+                          {t(subcat.value)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Sub-subcategory - shown only when subcategory is selected and has sub-subcategories */}
+                {subcategory && categories.find(c => c.value === category)?.subcategories.find(sc => sc.value === subcategory)?.subSubcategories && categories.find(c => c.value === category)!.subcategories.find(sc => sc.value === subcategory)!.subSubcategories.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="subSubcategory">
+                      {t("subSubcategory")} ({t("optional")})
+                    </Label>
+                    <select
+                      id="subSubcategory"
+                      className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      value={subSubcategory}
+                      onChange={(e) => setSubSubcategory(e.target.value)}
+                    >
+                      <option value="">{t("selectSubSubcategory")}</option>
+                      {categories.find(c => c.value === category)!.subcategories.find(sc => sc.value === subcategory)!.subSubcategories.map((ssc) => (
+                        <option key={ssc} value={ssc}>
+                          {t(ssc)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Category-Specific Fields (Item Specifics) */}
+                {category && subcategory && specificFields.length > 0 && (
+                  <div className="space-y-4 pt-4 border-t">
+                    <div>
+                      <h3 className="text-lg font-semibold mb-1">{t("itemSpecifics")}</h3>
+                      <p className="text-sm text-muted-foreground">{t("itemSpecificsHelp")}</p>
+                    </div>
+                    
+                    <div className="grid gap-4">
+                      {specificFields.map((field) => (
+                        <div key={field.name} className="space-y-2">
+                          <Label htmlFor={field.name}>
+                            {t(field.label)}{field.required && <span className="text-destructive ml-1">*</span>}
+                          </Label>
+                          
+                          {/* Text Input */}
+                          {field.type === 'text' && (
+                            <Input
+                              id={field.name}
+                              type="text"
+                              placeholder={field.placeholder}
+                              value={categorySpecificFields[field.name] || ''}
+                              onChange={(e) => setCategorySpecificFields({
+                                ...categorySpecificFields,
+                                [field.name]: e.target.value
+                              })}
+                            />
+                          )}
+                          
+                          {/* Number Input */}
+                          {field.type === 'number' && (
+                            <div className="flex items-center gap-2">
+                              <Input
+                                id={field.name}
+                                type="number"
+                                step="0.01"
+                                placeholder={field.placeholder}
+                                value={categorySpecificFields[field.name] || ''}
+                                onChange={(e) => setCategorySpecificFields({
+                                  ...categorySpecificFields,
+                                  [field.name]: e.target.value
+                                })}
+                                className="flex-1"
+                              />
+                              {field.unit && (
+                                <span className="text-sm text-muted-foreground">{field.unit}</span>
+                              )}
+                            </div>
+                          )}
+                          
+                          {/* Select Dropdown */}
+                          {field.type === 'select' && field.options && (
+                            <select
+                              id={field.name}
+                              className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                              value={categorySpecificFields[field.name] || ''}
+                              onChange={(e) => setCategorySpecificFields({
+                                ...categorySpecificFields,
+                                [field.name]: e.target.value
+                              })}
+                            >
+                              <option value="">-- {t("select")} --</option>
+                              {field.options.map((option) => (
+                                <option key={option} value={option}>
+                                  {t(option)}
+                                </option>
+                              ))}
+                            </select>
+                          )}
+                          
+                          {/* Multiselect (Checkboxes) */}
+                          {field.type === 'multiselect' && field.options && (
+                            <div className="grid grid-cols-2 gap-2 p-4 border rounded-md">
+                              {field.options.map((option) => (
+                                <div key={option} className="flex items-center space-x-2">
+                                  <input
+                                    type="checkbox"
+                                    id={`${field.name}-${option}`}
+                                    checked={(categorySpecificFields[field.name] || []).includes(option)}
+                                    onChange={(e) => {
+                                      const currentValues = categorySpecificFields[field.name] || []
+                                      const newValues = e.target.checked
+                                        ? [...currentValues, option]
+                                        : currentValues.filter((v: string) => v !== option)
+                                      setCategorySpecificFields({
+                                        ...categorySpecificFields,
+                                        [field.name]: newValues
+                                      })
+                                    }}
+                                    className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary"
+                                  />
+                                  <label 
+                                    htmlFor={`${field.name}-${option}`}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                                  >
+                                    {t(option)}
+                                  </label>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          
+                          {/* Boolean (Checkbox) */}
+                          {field.type === 'boolean' && (
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id={field.name}
+                                checked={categorySpecificFields[field.name] || false}
+                                onChange={(e) => setCategorySpecificFields({
+                                  ...categorySpecificFields,
+                                  [field.name]: e.target.checked
+                                })}
+                                className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-2 focus:ring-primary"
+                              />
+                              <label 
+                                htmlFor={field.name}
+                                className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                              >
+                                {t(field.label)}
+                              </label>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Images Upload */}
                 <div className="space-y-2">
