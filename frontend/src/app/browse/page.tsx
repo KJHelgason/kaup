@@ -394,9 +394,9 @@ export default function BrowsePage() {
                                     {t("all")}
                                   </button>
                                   
-                                  {subcat.subSubcategories.map((ssc) => (
+                                  {subcat.subSubcategories.map((ssc, index) => (
                                     <button
-                                      key={ssc}
+                                      key={`${subcat.value}-${ssc}-${index}`}
                                       onClick={() => {
                                         setSelectedSubSubcategory(ssc)
                                         setCurrentPage(1)

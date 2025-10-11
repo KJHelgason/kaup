@@ -24,6 +24,22 @@ export function getSlugFromValue(value: string): string {
   return categories.find(c => c.value === value)?.slug || value
 }
 
+// Helper function to convert Icelandic text to URL-friendly slug
+export function toSlug(text: string): string {
+  return text
+    .toLowerCase()
+    .replace(/\s+/g, '-')
+    .replace(/[áàâä]/g, 'a')
+    .replace(/[éèêë]/g, 'e')
+    .replace(/[íìîï]/g, 'i')
+    .replace(/[óòôö]/g, 'o')
+    .replace(/[úùûü]/g, 'u')
+    .replace(/[ýÿ]/g, 'y')
+    .replace(/ð/g, 'd')
+    .replace(/þ/g, 'th')
+    .replace(/[^a-z0-9-]/g, '')
+}
+
 export const categories: Category[] = [
   { 
     value: "Rafeindatækni", 

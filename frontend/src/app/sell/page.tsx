@@ -751,8 +751,8 @@ export default function SellPage() {
                       onChange={(e) => setSubSubcategory(e.target.value)}
                     >
                       <option value="">{t("selectSubSubcategory")}</option>
-                      {categories.find(c => c.value === category)!.subcategories.find(sc => sc.value === subcategory)!.subSubcategories.map((ssc) => (
-                        <option key={ssc} value={ssc}>
+                      {categories.find(c => c.value === category)!.subcategories.find(sc => sc.value === subcategory)!.subSubcategories.map((ssc, index) => (
+                        <option key={`${subcategory}-${ssc}-${index}`} value={ssc}>
                           {t(ssc)}
                         </option>
                       ))}
@@ -822,8 +822,8 @@ export default function SellPage() {
                               })}
                             >
                               <option value="">-- {t("select")} --</option>
-                              {field.options.map((option) => (
-                                <option key={option} value={option}>
+                              {field.options.map((option, index) => (
+                                <option key={`${field.name}-${option}-${index}`} value={option}>
                                   {t(option)}
                                 </option>
                               ))}
@@ -833,8 +833,8 @@ export default function SellPage() {
                           {/* Multiselect (Checkboxes) */}
                           {field.type === 'multiselect' && field.options && (
                             <div className="grid grid-cols-2 gap-2 p-4 border rounded-md">
-                              {field.options.map((option) => (
-                                <div key={option} className="flex items-center space-x-2">
+                              {field.options.map((option, index) => (
+                                <div key={`${field.name}-${option}-${index}`} className="flex items-center space-x-2">
                                   <input
                                     type="checkbox"
                                     id={`${field.name}-${option}`}

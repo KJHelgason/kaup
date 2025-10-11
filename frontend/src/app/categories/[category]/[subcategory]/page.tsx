@@ -1,7 +1,7 @@
 "use client"
 
 import { Header } from "@/components/Header"
-import { categories, getCategoryBySlug, getSubcategoryBySlug } from "@/lib/categories"
+import { categories, getCategoryBySlug, getSubcategoryBySlug, toSlug } from "@/lib/categories"
 import { useLanguage } from "@/contexts/LanguageContext"
 import { getListings, Listing } from "@/lib/api"
 import { useEffect, useState, use } from "react"
@@ -137,13 +137,13 @@ export default function SubcategoryPage({ params }: SubcategoryPageProps) {
                             <div className="mb-8">
                                 <h2 className="text-3xl font-semibold mb-4">{t("shopPopularCategories")}</h2>
                                 <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-                                    {subcategory.subSubcategories.filter(ssc => ssc !== "Annað").map((subSubcat) => (
+                                    {subcategory.subSubcategories.filter(ssc => ssc !== "Annað").map((subSubcat, index) => (
                                         <Link
-                                            key={subSubcat}
-                                            href={`/browse?category=${encodeURIComponent(category.value)}&subcategory=${encodeURIComponent(subcategory.value)}&subSubcategory=${encodeURIComponent(subSubcat)}`}
+                                            key={`${subcategory.slug}-${subSubcat}-${index}`}
+                                            href={`/categories/${category.slug}/${subcategory.slug}/${toSlug(subSubcat)}`}
                                             className="group cursor-pointer block"
                                         >
-                                            <div className="space-y-3">
+                                                <div className="space-y-3">
                                                 {/* Square Image Placeholder */}
                                                 <div className="aspect-square bg-gradient-to-br from-muted to-muted-foreground/20 flex items-center justify-center rounded-lg overflow-hidden group-hover:opacity-90 transition-opacity">
                                                     <span className="text-4xl opacity-40">📦</span>
