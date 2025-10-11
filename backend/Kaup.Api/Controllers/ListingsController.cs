@@ -23,9 +23,46 @@ public class ListingsController : ControllerBase
         _s3Service = s3Service;
     }
 
+    private static Dictionary<string, object>? DeserializeCategoryFields(string? json)
+    {
+        if (string.IsNullOrEmpty(json))
+            return null;
+
+        try
+        {
+            // Use JsonDocument to properly parse and convert types
+            using var doc = JsonDocument.Parse(json);
+            var result = new Dictionary<string, object>();
+
+            foreach (var property in doc.RootElement.EnumerateObject())
+            {
+                result[property.Name] = property.Value.ValueKind switch
+                {
+                    JsonValueKind.String => property.Value.GetString()!,
+                    JsonValueKind.Number => property.Value.TryGetInt32(out var intVal) ? (object)intVal : property.Value.GetDouble(),
+                    JsonValueKind.True => true,
+                    JsonValueKind.False => false,
+                    JsonValueKind.Null => null!,
+                    JsonValueKind.Array => property.Value.EnumerateArray()
+                        .Select(e => e.ValueKind == JsonValueKind.String ? e.GetString()! : e.ToString())
+                        .ToArray(),
+                    _ => property.Value.ToString()
+                };
+            }
+
+            return result;
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
     [HttpGet]
     public async Task<ActionResult<IEnumerable<ListingDto>>> GetListings(
         [FromQuery] string? category = null,
+        [FromQuery] string? subcategory = null,
+        [FromQuery] string? subSubcategory = null,
         [FromQuery] string? search = null,
         [FromQuery] decimal? minPrice = null,
         [FromQuery] decimal? maxPrice = null,
@@ -42,6 +79,12 @@ public class ListingsController : ControllerBase
 
         if (!string.IsNullOrEmpty(category))
             query = query.Where(l => l.Category == category);
+
+        if (!string.IsNullOrEmpty(subcategory))
+            query = query.Where(l => l.Subcategory == subcategory);
+
+        if (!string.IsNullOrEmpty(subSubcategory))
+            query = query.Where(l => l.SubSubcategory == subSubcategory);
 
         if (!string.IsNullOrEmpty(search))
             query = query.Where(l => l.Title.Contains(search) || l.Description.Contains(search));
@@ -74,6 +117,8 @@ public class ListingsController : ControllerBase
                 Price = l.Price,
                 BuyNowPrice = l.BuyNowPrice,
                 Category = l.Category,
+                Subcategory = l.Subcategory,
+                SubSubcategory = l.SubSubcategory,
                 Condition = l.Condition,
                 ImageUrls = l.ImageUrls,
                 ThumbnailUrls = l.ImageUrls.Select(url => _s3Service.GetThumbnailUrl(url)).ToArray(),
@@ -103,9 +148,7 @@ public class ListingsController : ControllerBase
                 ReturnsAccepted = l.ReturnsAccepted,
                 ReturnPeriod = l.ReturnPeriod,
                 ReturnShippingPaidBy = l.ReturnShippingPaidBy,
-                CategorySpecificFields = !string.IsNullOrEmpty(l.CategorySpecificFieldsJson)
-                    ? JsonSerializer.Deserialize<Dictionary<string, object>>(l.CategorySpecificFieldsJson)
-                    : null
+                CategorySpecificFields = DeserializeCategoryFields(l.CategorySpecificFieldsJson)
             })
             .ToList();
 
@@ -135,6 +178,8 @@ public class ListingsController : ControllerBase
             Price = listing.Price,
             BuyNowPrice = listing.BuyNowPrice,
             Category = listing.Category,
+            Subcategory = listing.Subcategory,
+            SubSubcategory = listing.SubSubcategory,
             Condition = listing.Condition,
             ImageUrls = listing.ImageUrls,
             ThumbnailUrls = listing.ImageUrls.Select(url => _s3Service.GetThumbnailUrl(url)).ToArray(),
@@ -164,9 +209,7 @@ public class ListingsController : ControllerBase
             ReturnsAccepted = listing.ReturnsAccepted,
             ReturnPeriod = listing.ReturnPeriod,
             ReturnShippingPaidBy = listing.ReturnShippingPaidBy,
-            CategorySpecificFields = !string.IsNullOrEmpty(listing.CategorySpecificFieldsJson)
-                ? JsonSerializer.Deserialize<Dictionary<string, object>>(listing.CategorySpecificFieldsJson)
-                : null
+            CategorySpecificFields = DeserializeCategoryFields(listing.CategorySpecificFieldsJson)
         };
 
         return Ok(listingDto);
@@ -189,6 +232,8 @@ public class ListingsController : ControllerBase
             Price = createDto.Price,
             BuyNowPrice = createDto.BuyNowPrice,
             Category = createDto.Category,
+            Subcategory = createDto.Subcategory,
+            SubSubcategory = createDto.SubSubcategory,
             Condition = createDto.Condition,
             ImageUrls = createDto.ImageUrls,
             ListingType = Enum.Parse<ListingType>(createDto.ListingType),
@@ -252,9 +297,7 @@ public class ListingsController : ControllerBase
             ReturnsAccepted = listing.ReturnsAccepted,
             ReturnPeriod = listing.ReturnPeriod,
             ReturnShippingPaidBy = listing.ReturnShippingPaidBy,
-            CategorySpecificFields = !string.IsNullOrEmpty(listing.CategorySpecificFieldsJson)
-                ? JsonSerializer.Deserialize<Dictionary<string, object>>(listing.CategorySpecificFieldsJson)
-                : null
+            CategorySpecificFields = DeserializeCategoryFields(listing.CategorySpecificFieldsJson)
         };
 
         return CreatedAtAction(nameof(GetListing), new { id = listing.Id }, listingDto);

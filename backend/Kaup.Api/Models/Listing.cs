@@ -8,6 +8,8 @@ public class Listing
     public decimal Price { get; set; }
     public decimal? BuyNowPrice { get; set; }
     public string Category { get; set; } = string.Empty;
+    public string? Subcategory { get; set; }
+    public string? SubSubcategory { get; set; }
     public string Condition { get; set; } = string.Empty;
     public string[] ImageUrls { get; set; } = Array.Empty<string>();
     public ListingType ListingType { get; set; }

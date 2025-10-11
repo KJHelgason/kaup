@@ -26,6 +26,137 @@ export function getSlugFromValue(value: string): string {
 
 // Helper function to convert Icelandic text to URL-friendly slug
 export function toSlug(text: string): string {
+  // Manual translations for common sub-subcategories
+  const translations: Record<string, string> = {
+    // Electronics
+    'Snjallsímar': 'smartphones',
+    'Spjaldtölvur': 'tablets',
+    'Símahlífar og fylgihlutir': 'phone-cases-accessories',
+    'Hleðslutæki': 'chargers',
+    'Fartölva': 'laptop',
+    'Borðtölva': 'desktop',
+    'Allt-í-einu': 'all-in-one',
+    'Netbók': 'netbook',
+    'Tölvuskjáir': 'monitors',
+    'Tölvuhlutir': 'computer-parts',
+    'Lyklaborð og mýs': 'keyboard-mouse',
+    'Stafrænar myndavélar': 'digital-cameras',
+    'Linsa': 'lenses',
+    'Þríróður og búnaður': 'tripods-equipment',
+    'Myndavélarhlífar': 'camera-cases',
+    'Heyrnartól': 'headphones',
+    'Hátalara': 'speakers',
+    'Hljómtæki': 'musical-instruments',
+    'Hljóðkerfisbúnaður': 'audio-equipment',
+    'PlayStation': 'playstation',
+    'Xbox': 'xbox',
+    'Nintendo': 'nintendo',
+    'Leikir': 'games',
+    'Fylgihlutir': 'accessories',
+    
+    // Fashion
+    'Jakkar og kápur': 'jackets-coats',
+    'Bolir og skyrtur': 'shirts',
+    'Buxur': 'pants',
+    'Jakkafatnaður': 'suits',
+    'Íþróttafatnaður': 'sportswear',
+    'Kjólar': 'dresses',
+    'Bolir og toppar': 'tops',
+    'Pils': 'skirts',
+    'Jakkar': 'jackets',
+    'Drengir': 'boys',
+    'Stúlkur': 'girls',
+    'Ungbörn': 'babies',
+    'Karlaskór': 'mens-shoes',
+    'Kvennaskór': 'womens-shoes',
+    'Barnaskór': 'kids-shoes',
+    'Íþróttaskór': 'sports-shoes',
+    'Stígvél': 'boots',
+    'Töskur og veski': 'bags-wallets',
+    'Hattar': 'hats',
+    'Belti': 'belts',
+    'Sjal og treflar': 'scarves',
+    'Hanskar': 'gloves',
+    
+    // Vehicles
+    'Fólksbilar': 'cars',
+    'Jeppar': 'suvs',
+    'Sendibílar': 'vans',
+    'Vörubílar': 'trucks',
+    'Hjól': 'wheels',
+    'Dekk': 'tires',
+    'Varahlutir': 'parts',
+    'Tól': 'tools',
+    'Mótorhjól': 'motorcycles',
+    'Vespur': 'scooters',
+    'Hjólhýsi': 'rvs',
+    'Fellihýsi': 'trailers',
+    'Snekkjur': 'boats',
+    'Seglbátar': 'sailboats',
+    'Kanó og kajakkar': 'canoes-kayaks',
+    'Útileguvagnar': 'campers',
+    'Hjólbarðar': 'bicycles',
+    'Rafmagnshjól': 'electric-bikes',
+    'Barnavanar': 'kids-bikes',
+    
+    // Home & Garden
+    'Húsgögn': 'furniture',
+    'Sófar': 'sofas',
+    'Borð': 'tables',
+    'Stólar': 'chairs',
+    'Rúm': 'beds',
+    'Bakaratól': 'kitchen-appliances',
+    'Þvottavélar': 'washing-machines',
+    'Þurrkari': 'dryers',
+    'Ísskápar': 'refrigerators',
+    'Ofnar': 'ovens',
+    'Verkfæri': 'tools',
+    'Rafmagnsverkfæri': 'power-tools',
+    'Handverkfæri': 'hand-tools',
+    'Garðverkfæri': 'garden-tools',
+    'Grill': 'grills',
+    'Plöntur': 'plants',
+    'Fræ': 'seeds',
+    'Áburður': 'fertilizer',
+    'Garðhúsgögn': 'garden-furniture',
+    
+    // Sports
+    'Hjólreiðar': 'cycling',
+    'Fótbolti': 'football',
+    'Körfubolti': 'basketball',
+    'Golf': 'golf',
+    'Tennis': 'tennis',
+    'Líkamsrækt': 'gym-fitness',
+    'Hlaupapellar': 'treadmills',
+    'Lóð': 'weights',
+    'Jóga': 'yoga',
+    'Útivist': 'outdoor',
+    'Tjöld': 'tents',
+    'Svefnpokar': 'sleeping-bags',
+    'Gönguskór': 'hiking-boots',
+    'Bakpokar': 'backpacks',
+    'Skíði': 'skiing',
+    'Snowboard': 'snowboard',
+    'Skautahlaupabretti': 'skateboards',
+    'Hjólbretti': 'scooters',
+    
+    // Other common terms
+    'Annað': 'other',
+    'Allt': 'all',
+    'Leikföng': 'toys',
+    'Barnabækur': 'childrens-books',
+    'Barnaleikföng': 'baby-toys',
+    'Brjóstmjólkurdælur': 'breast-pumps',
+    'Barnavagnar': 'strollers',
+    'Bílstólar': 'car-seats',
+  }
+  
+  // Check if we have a manual translation
+  if (translations[text]) {
+    return translations[text]
+  }
+  
+  // Otherwise, convert Icelandic to slug
   return text
     .toLowerCase()
     .replace(/\s+/g, '-')

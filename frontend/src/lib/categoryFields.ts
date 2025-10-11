@@ -21,7 +21,7 @@ export type CategoryFields = {
 }
 
 // Helper to check if the field structure has sub-subcategory levels
-function hasSubSubcategoryFields(fields: any): fields is { [subSubcategoryValue: string]: CategoryField[] } {
+export function hasSubSubcategoryFields(fields: any): fields is { [subSubcategoryValue: string]: CategoryField[] } {
   if (Array.isArray(fields)) return false
   return typeof fields === 'object' && fields !== null
 }
@@ -239,117 +239,86 @@ export const categoryFields: CategoryFields = {
     },
     
     // Phones & Tablets (Símar og spjaldtölvur)
-    "Símar og spjaldtölvur": [
-      // Device Type
-      {
-        name: "deviceType",
-        label: "deviceType",
-        type: "select",
-        required: true,
-        options: ["Snjallsími", "Spjaldtölva", "Annað"]
-      },
+    "Símar og spjaldtölvur": {
+      // Smartphones (Snjallsímar)
+      "Snjallsímar": [
+        { name: "brand", label: "brand", type: "select", required: true,
+          options: ["Apple", "Samsung", "Google", "OnePlus", "Xiaomi", "Huawei", "Nokia", "Motorola", "Annað"] },
+        { name: "model", label: "model", type: "text", placeholder: "t.d. iPhone 15 Pro, Galaxy S24" },
+        { name: "storageCapacity", label: "storageCapacity", type: "select",
+          options: ["32 GB", "64 GB", "128 GB", "256 GB", "512 GB", "1 TB", "Annað"] },
+        { name: "ramSize", label: "ramSize", type: "select",
+          options: ["2 GB", "3 GB", "4 GB", "6 GB", "8 GB", "12 GB", "16 GB", "Annað"] },
+        { name: "screenSize", label: "screenSize", type: "text", unit: "in", placeholder: "t.d. 6.1" },
+        { name: "operatingSystem", label: "operatingSystem", type: "select",
+          options: ["iOS", "Android", "Annað"] },
+        { name: "color", label: "color", type: "select",
+          options: ["Svart", "Hvítt", "Silfur", "Gull", "Blátt", "Grænt", "Bleikt", "Rautt", "Fjólublátt", "Annað"] },
+        { name: "batteryHealth", label: "batteryHealth", type: "number", unit: "%", placeholder: "t.d. 85" },
+        { name: "network", label: "network", type: "select",
+          options: ["5G", "4G LTE", "3G", "Annað"] },
+        { name: "simType", label: "simType", type: "select",
+          options: ["Nano SIM", "eSIM", "Dual SIM", "Annað"] },
+        { name: "carrierLock", label: "carrierLock", type: "select",
+          options: ["Ólæst", "Læst (tilgreindu í lýsingu)", "Veit ekki"] }
+      ],
       
-      // Brand
-      {
-        name: "brand",
-        label: "brand",
-        type: "select",
-        required: true,
-        options: ["Apple", "Samsung", "Google", "OnePlus", "Xiaomi", "Huawei", "Nokia", "Motorola", "Annað"]
-      },
+      // Tablets (Spjaldtölvur)
+      "Spjaldtölvur": [
+        { name: "brand", label: "brand", type: "select", required: true,
+          options: ["Apple", "Samsung", "Microsoft", "Amazon", "Lenovo", "Huawei", "Annað"] },
+        { name: "model", label: "model", type: "text", placeholder: "t.d. iPad Pro, Galaxy Tab S9" },
+        { name: "storageCapacity", label: "storageCapacity", type: "select",
+          options: ["32 GB", "64 GB", "128 GB", "256 GB", "512 GB", "1 TB", "Annað"] },
+        { name: "ramSize", label: "ramSize", type: "select",
+          options: ["2 GB", "3 GB", "4 GB", "6 GB", "8 GB", "12 GB", "16 GB", "Annað"] },
+        { name: "screenSize", label: "screenSize", type: "select",
+          options: ["7-8 in", "9-10 in", "11-12 in", "13 in+", "Annað"] },
+        { name: "operatingSystem", label: "operatingSystem", type: "select",
+          options: ["iPadOS", "Android", "Windows", "Annað"] },
+        { name: "color", label: "color", type: "select",
+          options: ["Svart", "Hvítt", "Silfur", "Gull", "Blátt", "Grænt", "Bleikt", "Annað"] },
+        { name: "network", label: "network", type: "select",
+          options: ["Wi-Fi Only", "Wi-Fi + Cellular (5G)", "Wi-Fi + Cellular (4G)", "Annað"] }
+      ],
       
-      // Model
-      {
-        name: "model",
-        label: "model",
-        type: "text",
-        required: false,
-        placeholder: "t.d. iPhone 15 Pro, Galaxy S24"
-      },
+      // Phone Cases & Accessories (Símahlífar og fylgihlutir)
+      "Símahlífar og fylgihlutir": [
+        { name: "accessoryType", label: "accessoryType", type: "select", required: true,
+          options: ["Símahlíf", "Skjáhlíf", "Hleðslusnúra", "Heyrnartól", "PopSocket", "Símahaldari", "Annað"] },
+        { name: "compatibleWith", label: "compatibleWith", type: "text", placeholder: "t.d. iPhone 15, Galaxy S24" },
+        { name: "brand", label: "brand", type: "select",
+          options: ["Apple", "Samsung", "OtterBox", "Spigen", "UAG", "Generic", "Annað"] },
+        { name: "material", label: "material", type: "select",
+          options: ["Silíkon", "Leður", "Plast", "Gler", "TPU", "Metal", "Annað"] },
+        { name: "color", label: "color", type: "select",
+          options: ["Svart", "Hvítt", "Silfur", "Blátt", "Rautt", "Grænt", "Bleikt", "Gult", "Fjöllitur", "Annað"] }
+      ],
       
-      // Storage Capacity
-      {
-        name: "storageCapacity",
-        label: "storageCapacity",
-        type: "select",
-        required: false,
-        options: ["32 GB", "64 GB", "128 GB", "256 GB", "512 GB", "1 TB", "Annað"]
-      },
+      // Chargers (Hleðslutæki)
+      "Hleðslutæki": [
+        { name: "chargerType", label: "chargerType", type: "select", required: true,
+          options: ["Wall Charger", "Car Charger", "Wireless Charger", "Power Bank", "Charging Cable", "Annað"] },
+        { name: "cableType", label: "cableType", type: "select",
+          options: ["Lightning", "USB-C", "Micro USB", "Magnetic", "Ekkert (þráðlaust)", "Annað"] },
+        { name: "powerOutput", label: "powerOutput", type: "select",
+          options: ["5W", "10W", "15W", "20W", "30W", "45W+", "Annað"] },
+        { name: "brand", label: "brand", type: "select",
+          options: ["Apple", "Samsung", "Anker", "Belkin", "Aukey", "Generic", "Annað"] },
+        { name: "features", label: "features", type: "multiselect",
+          options: ["Fast Charging", "Wireless", "Multi-Port", "Foldable Plug", "LED Indicator", "Travel Adapter"] },
+        { name: "color", label: "color", type: "select",
+          options: ["Svart", "Hvítt", "Silfur", "Annað"] }
+      ],
       
-      // RAM
-      {
-        name: "ramSize",
-        label: "ramSize",
-        type: "select",
-        required: false,
-        options: ["2 GB", "3 GB", "4 GB", "6 GB", "8 GB", "12 GB", "16 GB", "Annað"]
-      },
-      
-      // Screen Size
-      {
-        name: "screenSize",
-        label: "screenSize",
-        type: "text",
-        required: false,
-        unit: "in",
-        placeholder: "t.d. 6.1"
-      },
-      
-      // Operating System
-      {
-        name: "operatingSystem",
-        label: "operatingSystem",
-        type: "select",
-        required: false,
-        options: ["iOS", "Android", "Annað"]
-      },
-      
-      // Color
-      {
-        name: "color",
-        label: "color",
-        type: "select",
-        required: false,
-        options: ["Svart", "Hvítt", "Silfur", "Gull", "Blátt", "Grænt", "Bleikt", "Rautt", "Fjólublátt", "Annað"]
-      },
-      
-      // Battery Health (for phones)
-      {
-        name: "batteryHealth",
-        label: "batteryHealth",
-        type: "number",
-        required: false,
-        unit: "%",
-        placeholder: "t.d. 85"
-      },
-      
-      // Network
-      {
-        name: "network",
-        label: "network",
-        type: "select",
-        required: false,
-        options: ["5G", "4G LTE", "3G", "Wi-Fi Only", "Annað"]
-      },
-      
-      // SIM Card Type
-      {
-        name: "simType",
-        label: "simType",
-        type: "select",
-        required: false,
-        options: ["Nano SIM", "eSIM", "Dual SIM", "Annað"]
-      },
-      
-      // Carrier Lock
-      {
-        name: "carrierLock",
-        label: "carrierLock",
-        type: "select",
-        required: false,
-        options: ["Ólæst", "Læst (tilgreindu í lýsingu)", "Veit ekki"]
-      }
-    ],
+      // Other (Annað)
+      "Annað": [
+        { name: "brand", label: "brand", type: "select",
+          options: ["Apple", "Samsung", "Google", "Annað"] },
+        { name: "color", label: "color", type: "select",
+          options: ["Svart", "Hvítt", "Silfur", "Annað"] }
+      ]
+    },
     
     // Cameras (Myndavélar)
     "Myndavélar": {

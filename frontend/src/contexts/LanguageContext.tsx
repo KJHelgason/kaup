@@ -533,6 +533,8 @@ const translations: Translations = {
   selectSubcategory: { is: 'Veldu undirflokk', en: 'Select subcategory' },
   subSubcategory: { is: 'Undirundirflokkur', en: 'Sub-subcategory' },
   selectSubSubcategory: { is: 'Veldu undirundirflokk', en: 'Select sub-subcategory' },
+  subSubcategoryRequired: { is: 'Vinsamlegast veldu undirundirflokk', en: 'Please select a sub-subcategory' },
+  selectSubSubcategoryMessage: { is: 'Vinsamlegast veldu undir-undirflokk til að sjá viðeigandi vöruupplýsingar', en: 'Please select a sub-subcategory to see relevant item specifics' },
   conditionBrandNew: { is: 'Glænýtt', en: 'Brand New' },
   conditionNew: { is: 'Nýtt', en: 'New' },
   conditionLikeNew: { is: 'Eins og nýtt', en: 'Like New' },

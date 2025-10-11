@@ -12,7 +12,8 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { Loader2, Package, Truck, RefreshCw, Info } from "lucide-react"
 import { MultipleImageUpload } from "@/components/MultipleImageUpload"
-import { getCategoryFields, CategoryField } from "@/lib/categoryFields"
+import { getCategoryFields, CategoryField, hasSubSubcategoryFields, categoryFields } from "@/lib/categoryFields"
+import { categories } from "@/lib/categories"
 
 export default function SellPage() {
   const { t } = useLanguage()
@@ -63,423 +64,23 @@ export default function SellPage() {
   // Get category-specific fields based on selected category/subcategory/sub-subcategory
   const specificFields = getCategoryFields(category, subcategory, subSubcategory)
 
+  // Debug logging
+  useEffect(() => {
+    console.log('🔍 Sell Page Debug:', {
+      category,
+      subcategory,
+      subSubcategory,
+      specificFieldsCount: specificFields.length,
+      specificFields: specificFields.map(f => f.name)
+    })
+  }, [category, subcategory, subSubcategory, specificFields])
+
   // Reset category-specific fields when category, subcategory, or sub-subcategory changes
   useEffect(() => {
     setCategorySpecificFields({})
   }, [category, subcategory, subSubcategory])
 
-  const categories = [
-    { 
-      value: "Rafeindatækni", 
-      label: "Rafeindatækni",
-      subcategories: [
-        { 
-          value: "Símar og spjaldtölvur", 
-          subSubcategories: ["Snjallsímar", "Spjaldtölvur", "Símahlífar og fylgihlutir", "Hleðslutæki", "Annað"]
-        },
-        { 
-          value: "Tölvur", 
-          subSubcategories: ["Fartölvur", "Borðtölvur", "Tölvuskjáir", "Tölvuhlutir", "Lyklaborð og mýs", "Annað"]
-        },
-        { 
-          value: "Myndavélar", 
-          subSubcategories: ["Stafrænar myndavélar", "Linsa", "Þríróður og búnaður", "Myndavélarhlífar", "Annað"]
-        },
-        { 
-          value: "Hljóðbúnaður", 
-          subSubcategories: ["Heyrnartól", "Hátalara", "Hljómtæki", "Hljóðkerfisbúnaður", "Annað"]
-        },
-        { 
-          value: "Tölvuleikir & Leikjatölvur", 
-          subSubcategories: ["PlayStation", "Xbox", "Nintendo", "Leikir", "Fylgihlutir", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Tíska", 
-      label: "Tíska",
-      subcategories: [
-        { 
-          value: "Föt - Karlar", 
-          subSubcategories: ["Jakkar og kápur", "Bolir og skyrtur", "Buxur", "Jakkafatnaður", "Íþróttafatnaður", "Annað"]
-        },
-        { 
-          value: "Föt - Konur", 
-          subSubcategories: ["Kjólar", "Bolir og toppar", "Buxur", "Pils", "Jakkar", "Annað"]
-        },
-        { 
-          value: "Föt - Börn", 
-          subSubcategories: ["Drengir", "Stúlkur", "Ungbörn", "Annað"]
-        },
-        { 
-          value: "Skór", 
-          subSubcategories: ["Karlaskór", "Kvennaskór", "Barnaskór", "Íþróttaskór", "Stígvél", "Annað"]
-        },
-        { 
-          value: "Fylgihlutir", 
-          subSubcategories: ["Töskur og veski", "Hattar", "Belti", "Sjal og treflar", "Hanskar", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Heimili & Garður", 
-      label: "Heimili & Garður",
-      subcategories: [
-        { 
-          value: "Húsgögn", 
-          subSubcategories: ["Sófar og stólar", "Borð", "Rúm", "Skápar", "Hillur", "Annað"]
-        },
-        { 
-          value: "Eldhúsbúnaður", 
-          subSubcategories: ["Pottaefni", "Borðbúnaður", "Smátæki", "Geymsla", "Annað"]
-        },
-        { 
-          value: "Skraut", 
-          subSubcategories: ["Veggskraut", "Kerti", "Púðar", "Teppi", "Ljós", "Annað"]
-        },
-        { 
-          value: "Verkfæri", 
-          subSubcategories: ["Rafverkfæri", "Handverkfæri", "Málningarbúnaður", "Mælikvarðar", "Annað"]
-        },
-        { 
-          value: "Garðyrkja", 
-          subSubcategories: ["Garðverkfæri", "Pottur og krukk", "Fræ og plöntur", "Sláttuvélar", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Íþróttir & Útivist", 
-      label: "Íþróttir & Útivist",
-      subcategories: [
-        { 
-          value: "Líkamsræktarbúnaður", 
-          subSubcategories: ["Lóð og búnaður", "Jógabúnaður", "Hjólreiðaþjálfar", "Hlaupaborð", "Annað"]
-        },
-        { 
-          value: "Hjól", 
-          subSubcategories: ["Götuhjól", "Fjallahjól", "Rafmagnshjól", "Börn hjól", "Fylgihlutir", "Annað"]
-        },
-        { 
-          value: "Útivistarfatnaður", 
-          subSubcategories: ["Göngufatnaður", "Gönguskór", "Bakpokar", "Tjöld", "Svefnpokar", "Annað"]
-        },
-        { 
-          value: "Íþróttafatnaður", 
-          subSubcategories: ["Hlaupafatnaður", "Íþróttaskór", "Æfingarfatnaður", "Sundföt", "Annað"]
-        },
-        { 
-          value: "Gönguskíði", 
-          subSubcategories: ["Alförin skíði", "Borðskíði", "Skíðastafir", "Hjálmar", "Gleraugu", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Farartæki", 
-      label: "Farartæki",
-      subcategories: [
-        { 
-          value: "Bílar", 
-          subSubcategories: ["Fólksbílar", "Jeppar", "Sportbílar", "Húsbílar", "Annað"]
-        },
-        { 
-          value: "Mótorhjól", 
-          subSubcategories: ["Götuhjól", "Krosshjól", "Vespuhjól", "Fjórhjól", "Annað"]
-        },
-        { 
-          value: "Hjólhýsi", 
-          subSubcategories: ["Tjaldvagnar", "Húsbílahúsgögn", "Annað"]
-        },
-        { 
-          value: "Varahlutir", 
-          subSubcategories: ["Hjól og dekk", "Hljóðkerfi", "Ljós", "Innri hlutir", "Ytri hlutir", "Annað"]
-        },
-        { 
-          value: "Fylgihlutir", 
-          subSubcategories: ["GPS og hleðsla", "Bifreiðaskraut", "Hreinsiefni", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Bækur, Kvikmyndir & Tónlist", 
-      label: "Bækur, Kvikmyndir & Tónlist",
-      subcategories: [
-        { 
-          value: "Bækur", 
-          subSubcategories: ["Skáldsögur", "Barnabækur", "Námsbækur", "Ævisögur", "Matreiðslubækur", "Annað"]
-        },
-        { 
-          value: "Geisladiskar", 
-          subSubcategories: ["Kvikmyndir - DVD", "Kvikmyndir - Blu-ray", "Tónlist - CD", "Leikir", "Annað"]
-        },
-        { 
-          value: "Vínylplötur", 
-          subSubcategories: ["Rokk", "Popp", "Jazz", "Klassík", "Annað"]
-        },
-        { 
-          value: "Hljóðfæri", 
-          subSubcategories: ["Gítarar", "Píanó og hljómborð", "Trommur", "Strengir", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Leikföng & Barnabúnaður", 
-      label: "Leikföng & Barnabúnaður",
-      subcategories: [
-        { 
-          value: "Leikföng", 
-          subSubcategories: ["LEGO og byggingarkubbar", "Dúkkur", "Tölvuleikjaleikföng", "Bílar og vélar", "Spil", "Annað"]
-        },
-        { 
-          value: "Barnavagnar", 
-          subSubcategories: ["Göngukerru", "Kerrur", "Tvíburavagnar", "Fylgihlutir", "Annað"]
-        },
-        { 
-          value: "Barnastólar", 
-          subSubcategories: ["Hásæti", "Bílstólar", "Vaggsófar", "Annað"]
-        },
-        { 
-          value: "Barnafatnaður", 
-          subSubcategories: ["Ungbörn (0-2 ára)", "Smábörn (2-5 ára)", "Börn (6+ ára)", "Skór", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Heilsa & Snyrtivörur", 
-      label: "Heilsa & Snyrtivörur",
-      subcategories: [
-        { 
-          value: "Snyrtivörur", 
-          subSubcategories: ["Förðun", "Neglur", "Ilmvatn", "Tól", "Annað"]
-        },
-        { 
-          value: "Húðvörur", 
-          subSubcategories: ["Andlitskrem", "Húðhreinsivörur", "Sólarvörn", "Annað"]
-        },
-        { 
-          value: "Heilsuvörur", 
-          subSubcategories: ["Vítamín", "Næringarefni", "Fyrstu hjálp", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Safngripir & List", 
-      label: "Safngripir & List",
-      subcategories: [
-        { 
-          value: "Listaverk", 
-          subSubcategories: ["Málverk", "Myndir", "Skúlptúrar", "Annað"]
-        },
-        { 
-          value: "Fornmunir", 
-          subSubcategories: ["Húsgögn", "Skartgripir", "Myntir", "Annað"]
-        },
-        { 
-          value: "Safnkort", 
-          subSubcategories: ["Íþróttakort", "Pokémon", "Magic", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Gæludýravörur", 
-      label: "Gæludýravörur",
-      subcategories: [
-        { 
-          value: "Hundavörur", 
-          subSubcategories: ["Hundfóður", "Leikföng", "Beð", "Hálsbönd og taumar", "Annað"]
-        },
-        { 
-          value: "Kattavörur", 
-          subSubcategories: ["Kattafóður", "Húsgögn", "Leikföng", "Sandkassar", "Annað"]
-        },
-        { 
-          value: "Fiskar & Búnaður", 
-          subSubcategories: ["Fiskabúr", "Síur", "Búnaður", "Fiskur", "Annað"]
-        },
-        { 
-          value: "Fuglabúnaður", 
-          subSubcategories: ["Búr", "Fóður", "Leikföng", "Annað"]
-        },
-        { 
-          value: "Smádýr", 
-          subSubcategories: ["Búr", "Fóður", "Annað"]
-        },
-        { 
-          value: "Skriðdýr", 
-          subSubcategories: ["Terrarium", "Hiti og ljós", "Fóður", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Skartgripir & Úr", 
-      label: "Skartgripir & Úr",
-      subcategories: [
-        { 
-          value: "Úr", 
-          subSubcategories: ["Karlaúr", "Kvennaúr", "Snjallúr", "Fylgihlutir", "Annað"]
-        },
-        { 
-          value: "Fínlegir skartgripir", 
-          subSubcategories: ["Hringir", "Hálsmen", "Armbönd", "Eyrnalokkar", "Annað"]
-        },
-        { 
-          value: "Tískuskartgripir", 
-          subSubcategories: ["Hringir", "Hálsmen", "Armbönd", "Eyrnalokkar", "Annað"]
-        },
-        { 
-          value: "Fornir skartgripir", 
-          subSubcategories: ["Hringir", "Broskar", "Hálsmen", "Annað"]
-        },
-        { 
-          value: "Karlaskartgripir", 
-          subSubcategories: ["Hringir", "Armbönd", "Hálsmen", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Fyrirtæki & Iðnaður", 
-      label: "Fyrirtæki & Iðnaður",
-      subcategories: [
-        { 
-          value: "Veitingahúsabúnaður", 
-          subSubcategories: ["Eldhúsbúnaður", "Borðbúnaður", "Kælibúnaður", "Annað"]
-        },
-        { 
-          value: "Heilbrigðisbúnaður", 
-          subSubcategories: ["Læknistæki", "Rannsóknarfæri", "Annað"]
-        },
-        { 
-          value: "Þungavinnuvélar", 
-          subSubcategories: ["Gröfur", "Lyftarar", "Vélar", "Annað"]
-        },
-        { 
-          value: "Rafbúnaður", 
-          subSubcategories: ["Strengir og kapal", "Rofa", "Ljós", "Annað"]
-        },
-        { 
-          value: "Skrifstofubúnaður", 
-          subSubcategories: ["Prentarar", "Pappír", "Húsgögn", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Miðar & Ferðalög", 
-      label: "Miðar & Ferðalög",
-      subcategories: [
-        { 
-          value: "Tónleikamiðar", 
-          subSubcategories: ["Rokk og Popp", "Klassík", "Jazz", "Annað"]
-        },
-        { 
-          value: "Íþróttamiðar", 
-          subSubcategories: ["Fótbolti", "Körfubolti", "Handbolti", "Annað"]
-        },
-        { 
-          value: "Viðburðamiðar", 
-          subSubcategories: ["Leikhús", "Stand-up", "Viðburðir", "Annað"]
-        },
-        { 
-          value: "Ferðapakkar", 
-          subSubcategories: ["Flug og hótel", "Rútupakkar", "Annað"]
-        },
-        { 
-          value: "Farangur", 
-          subSubcategories: ["Ferðatöskur", "Bakpokar", "Handtöskur", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Þjónusta", 
-      label: "Þjónusta",
-      subcategories: [
-        { 
-          value: "Uppboðsþjónusta", 
-          subSubcategories: ["Skráning", "Ljósmyndun", "Annað"]
-        },
-        { 
-          value: "Vef & Tölvuþjónusta", 
-          subSubcategories: ["Vefhönnun", "Forritun", "Tölvuviðgerðir", "Annað"]
-        },
-        { 
-          value: "Prentun", 
-          subSubcategories: ["Nafnspjöld", "Merki", "Annað"]
-        },
-        { 
-          value: "Viðgerðarþjónusta", 
-          subSubcategories: ["Tölvur", "Símar", "Annað"]
-        },
-        { 
-          value: "Listaþjónusta", 
-          subSubcategories: ["Ljósmyndun", "Hönnun", "Annað"]
-        },
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    },
-    { 
-      value: "Annað", 
-      label: "Annað",
-      subcategories: [
-        { 
-          value: "Annað", 
-          subSubcategories: []
-        }
-      ]
-    }
-  ]
+  // Using categories from the central categories.ts file to ensure consistency
 
   const conditions = [
     { value: "Brand New", labelKey: "conditionBrandNew" },
@@ -547,6 +148,14 @@ export default function SellPage() {
       return
     }
 
+    // Validate sub-subcategory is selected when it has nested fields
+    if (subcategory && categoryFields[category]?.[subcategory] && hasSubSubcategoryFields(categoryFields[category][subcategory])) {
+      if (!subSubcategory) {
+        setError(t("subSubcategoryRequired") || "Please select a sub-subcategory")
+        return
+      }
+    }
+
     // Validate required category-specific fields
     const requiredFields = specificFields.filter(field => field.required)
     for (const field of requiredFields) {
@@ -571,6 +180,8 @@ export default function SellPage() {
         price: parseFloat(price),
         buyNowPrice: buyNowPrice ? parseFloat(buyNowPrice) : undefined,
         category,
+        subcategory: subcategory || undefined,
+        subSubcategory: subSubcategory || undefined,
         condition,
         imageUrls: imageUrls,
         listingType: listingType,
@@ -742,7 +353,13 @@ export default function SellPage() {
                 {subcategory && categories.find(c => c.value === category)?.subcategories.find(sc => sc.value === subcategory)?.subSubcategories && categories.find(c => c.value === category)!.subcategories.find(sc => sc.value === subcategory)!.subSubcategories.length > 0 && (
                   <div className="space-y-2">
                     <Label htmlFor="subSubcategory">
-                      {t("subSubcategory")} ({t("optional")})
+                      {t("subSubcategory")}
+                      {/* Check if this subcategory has nested fields (making sub-subcategory required) */}
+                      {category && subcategory && categoryFields[category]?.[subcategory] && hasSubSubcategoryFields(categoryFields[category][subcategory]) ? (
+                        <span className="text-destructive ml-1">*</span>
+                      ) : (
+                        <> ({t("optional")})</>
+                      )}
                     </Label>
                     <select
                       id="subSubcategory"
@@ -757,6 +374,15 @@ export default function SellPage() {
                         </option>
                       ))}
                     </select>
+                  </div>
+                )}
+
+                {/* Message when sub-subcategory is required but not selected */}
+                {category && subcategory && categoryFields[category]?.[subcategory] && hasSubSubcategoryFields(categoryFields[category][subcategory]) && !subSubcategory && (
+                  <div className="bg-muted/50 border border-muted-foreground/20 rounded-md p-4">
+                    <p className="text-sm text-muted-foreground">
+                      {t("selectSubSubcategoryMessage") || "Please select a sub-subcategory to see relevant item specifics"}
+                    </p>
                   </div>
                 )}
 

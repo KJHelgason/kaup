@@ -7,6 +7,8 @@ export interface Listing {
   price: number
   buyNowPrice?: number
   category: string
+  subcategory?: string
+  subSubcategory?: string
   condition: string
   imageUrls: string[]
   thumbnailUrls: string[]
@@ -157,6 +159,8 @@ export async function createListing(listing: {
   price: number
   buyNowPrice?: number
   category: string
+  subcategory?: string
+  subSubcategory?: string
   condition: string
   imageUrls: string[]
   listingType: string
