@@ -214,8 +214,8 @@ export default function SubSubcategoryPage({ params }: SubSubcategoryPageProps) 
             <Header />
 
             <main className="flex-1 bg-muted/30">
-                {/* Breadcrumb */}
-                <div className="container mx-auto px-4 py-2">
+                {/* Breadcrumb - Wider container */}
+                <div className="max-w-[1400px] mx-auto px-6 py-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
                         <Link href="/" className="hover:text-primary">{t("home")}</Link>
                         <ChevronRight className="h-4 w-4" />
@@ -230,11 +230,14 @@ export default function SubSubcategoryPage({ params }: SubSubcategoryPageProps) 
                 </div>
 
                 {/* Category Title */}
-                <h1 className="text-4xl font-bold mb-6 px-4">{t(subSubcategory)}</h1>
+                <div className="max-w-[1400px] mx-auto px-6">
+                    <h1 className="text-4xl font-bold mb-6">{t(subSubcategory)}</h1>
+                </div>
+                
                 {/* Main Layout: Full Width with Sidebar + Content */}
-                <div className="flex">
+                <div className="max-w-[1400px] mx-auto px-6 flex gap-6">
                     {/* Left Sidebar - Navigation Tree */}
-                    <aside className="hidden lg:block w-64 flex-shrink-0 px-4 py-2">
+                    <aside className="hidden lg:block w-[280px] flex-shrink-0">
                         {/* Shop by Category */}
                         <div className="mb-6">
                             <h2 className="font-bold text-lg mb-3">{t("shopByCategory")}</h2>
@@ -290,7 +293,7 @@ export default function SubSubcategoryPage({ params }: SubSubcategoryPageProps) 
 
                     {/* Main Content Area - In Container */}
                     <div className="flex-1 min-w-0">
-                        <div className="container mx-auto px-4 pb-12">
+                        <div className="pb-12">
                             {/* Top Controls Bar */}
                             <div className="p-4 pb-0">
                                 {/* First Row: Listing Type Slider & Sort/View Controls */}

@@ -63,8 +63,8 @@ export default function CategoryPage({ params }: CategoryPageProps) {
             <Header />
 
             <main className="flex-1 bg-muted/30">
-                {/* Breadcrumb - Full Width Container */}
-                <div className="container mx-auto px-4 py-2">
+                {/* Breadcrumb - Wider container */}
+                <div className="max-w-[1400px] mx-auto px-6 py-2">
                     <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
                         <Link href="/" className="hover:text-primary">{t("home")}</Link>
                         <ChevronRight className="h-4 w-4" />
@@ -75,11 +75,14 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                 </div>
 
                 {/* Category Title */}
-                <h1 className="text-4xl font-bold mb-6 px-4">{t(category.value)}</h1>
+                <div className="max-w-[1400px] mx-auto px-6">
+                    <h1 className="text-4xl font-bold mb-6">{t(category.value)}</h1>
+                </div>
+
                 {/* Main Layout: Full Width with Sidebar + Content */}
-                <div className="flex">
-                    {/* Left Sidebar - Fixed to left edge */}
-                    <aside className="hidden lg:block w-64 flex-shrink-0 px-4 py-2">
+                <div className="max-w-[1400px] mx-auto px-6 flex gap-6">
+                    {/* Left Sidebar - Navigation Tree */}
+                    <aside className="hidden lg:block w-[280px] flex-shrink-0">
                         {/* Shop by Category */}
                         <div className="mb-6">
                             <h2 className="font-bold text-lg mb-3">{t("shopByCategory")}</h2>
@@ -108,9 +111,9 @@ export default function CategoryPage({ params }: CategoryPageProps) {
                         </div>
                     </aside>
 
-                    {/* Main Content - In Container */}
-                    <div className="flex-1">
-                        <div className="container mx-auto px-4 py-2">
+                    {/* Main Content Area */}
+                    <div className="flex-1 min-w-0">
+                        <div className="pb-12">
                             {/* Shop by Category Grid with Images */}
                             <div className="mb-8">
                                 <h2 className="text-3xl font-semibold mb-4">{t("shopByCategory")}</h2>

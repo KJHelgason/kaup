@@ -1,555 +1,748 @@
 "use client"
 
 import { Header } from "@/components/Header"
+import { categories } from "@/lib/categories"
+import { getListings, Listing } from "@/lib/api"
+import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import { ListingCard } from "@/components/ListingCard"
+import { ChevronRight, Grid3x3, List, ChevronDown, SlidersHorizontal, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { getListings, Listing } from "@/lib/api"
-import { useLanguage } from "@/contexts/LanguageContext"
-import { useEffect, useState, useCallback } from "react"
-import { useSearchParams } from "next/navigation"
-import { Search, SlidersHorizontal, X } from "lucide-react"
+
+type ListingTypeFilter = "all" | "auction" | "buyNow" | "bestOffer"
+type SortOption = "bestMatch" | "endingSoonest" | "newlyListed" | "priceLowest" | "priceHighest"
+type ViewMode = "gallery" | "list"
+type ConditionFilter = "all" | "New" | "Used" | "For Parts"
 
 export default function BrowsePage() {
-  const { t } = useLanguage()
-  const searchParams = useSearchParams()
-  const [listings, setListings] = useState<Listing[]>([])
-  const [loading, setLoading] = useState(true)
-  const [totalCount, setTotalCount] = useState(0)
-  const [currentPage, setCurrentPage] = useState(1)
-  const pageSize = 12
+    const searchParams = useSearchParams()
+    const [listings, setListings] = useState<Listing[]>([])
+    const [totalCount, setTotalCount] = useState(0)
+    const [loading, setLoading] = useState(true)
+    const [currentPage, setCurrentPage] = useState(1)
 
-  // Filter states
-  const [searchQuery, setSearchQuery] = useState("")
-  const [selectedCategory, setSelectedCategory] = useState("")
-  const [selectedSubcategory, setSelectedSubcategory] = useState("")
-  const [selectedSubSubcategory, setSelectedSubSubcategory] = useState("")
-  const [selectedListingType, setSelectedListingType] = useState(searchParams.get('listingType') || "")
-  const [minPrice, setMinPrice] = useState("")
-  const [maxPrice, setMaxPrice] = useState("")
-  const [showFilters, setShowFilters] = useState(false)
+    // Filter states
+    const [listingTypeFilter, setListingTypeFilter] = useState<ListingTypeFilter>("all")
+    const [sortOption, setSortOption] = useState<SortOption>("bestMatch")
+    const [viewMode, setViewMode] = useState<ViewMode>("gallery")
+    const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+    const [conditionFilter, setConditionFilter] = useState<ConditionFilter>("all")
+    const [minPrice, setMinPrice] = useState<string>("")
+    const [maxPrice, setMaxPrice] = useState<string>("")
+    const [showMobileFilters, setShowMobileFilters] = useState(false)
+    const [showSortDropdown, setShowSortDropdown] = useState(false)
 
-  const categories = [
-    { 
-      value: "Rafeindatækni", 
-      label: "Rafeindatækni",
-      subcategories: [
-        { value: "Símar og spjaldtölvur", subSubcategories: ["Snjallsímar", "Spjaldtölvur", "Símahlífar og fylgihlutir", "Hleðslutæki", "Annað"] },
-        { value: "Tölvur", subSubcategories: ["Fartölvur", "Borðtölvur", "Tölvuskjáir", "Tölvuhlutir", "Lyklaborð og mýs", "Annað"] },
-        { value: "Myndavélar", subSubcategories: ["Stafrænar myndavélar", "Linsa", "Þríróður og búnaður", "Myndavélarhlífar", "Annað"] },
-        { value: "Hljóðbúnaður", subSubcategories: ["Heyrnartól", "Hátalara", "Hljómtæki", "Hljóðkerfisbúnaður", "Annað"] },
-        { value: "Tölvuleikir & Leikjatölvur", subSubcategories: ["PlayStation", "Xbox", "Nintendo", "Leikir", "Fylgihlutir", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Tíska", 
-      label: "Tíska",
-      subcategories: [
-        { value: "Föt - Karlar", subSubcategories: ["Jakkar og kápur", "Bolir og skyrtur", "Buxur", "Jakkafatnaður", "Íþróttafatnaður", "Annað"] },
-        { value: "Föt - Konur", subSubcategories: ["Kjólar", "Bolir og toppar", "Buxur", "Pils", "Jakkar", "Annað"] },
-        { value: "Föt - Börn", subSubcategories: ["Drengir", "Stúlkur", "Ungbörn", "Annað"] },
-        { value: "Skór", subSubcategories: ["Karlaskór", "Kvennaskór", "Barnaskór", "Íþróttaskór", "Stígvél", "Annað"] },
-        { value: "Fylgihlutir", subSubcategories: ["Töskur og veski", "Hattar", "Belti", "Sjal og treflar", "Hanskar", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Heimili & Garður", 
-      label: "Heimili & Garður",
-      subcategories: [
-        { value: "Húsgögn", subSubcategories: ["Sófar og stólar", "Borð", "Rúm", "Skápar", "Hillur", "Annað"] },
-        { value: "Eldhúsbúnaður", subSubcategories: ["Pottaefni", "Borðbúnaður", "Smátæki", "Geymsla", "Annað"] },
-        { value: "Skraut", subSubcategories: ["Veggskraut", "Kerti", "Púðar", "Teppi", "Ljós", "Annað"] },
-        { value: "Verkfæri", subSubcategories: ["Rafverkfæri", "Handverkfæri", "Málningarbúnaður", "Mælikvarðar", "Annað"] },
-        { value: "Garðyrkja", subSubcategories: ["Garðverkfæri", "Pottur og krukk", "Fræ og plöntur", "Sláttuvélar", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Íþróttir & Útivist", 
-      label: "Íþróttir & Útivist",
-      subcategories: [
-        { value: "Líkamsræktarbúnaður", subSubcategories: ["Lóð og búnaður", "Jógabúnaður", "Hjólreiðaþjálfar", "Hlaupaborð", "Annað"] },
-        { value: "Hjól", subSubcategories: ["Götuhjól", "Fjallahjól", "Rafmagnshjól", "Börn hjól", "Fylgihlutir", "Annað"] },
-        { value: "Útivistarfatnaður", subSubcategories: ["Göngufatnaður", "Gönguskór", "Bakpokar", "Tjöld", "Svefnpokar", "Annað"] },
-        { value: "Íþróttafatnaður", subSubcategories: ["Hlaupafatnaður", "Íþróttaskór", "Æfingarfatnaður", "Sundföt", "Annað"] },
-        { value: "Gönguskíði", subSubcategories: ["Alförin skíði", "Borðskíði", "Skíðastafir", "Hjálmar", "Gleraugu", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Farartæki", 
-      label: "Farartæki",
-      subcategories: [
-        { value: "Bílar", subSubcategories: ["Fólksbílar", "Jeppar", "Sportbílar", "Húsbílar", "Annað"] },
-        { value: "Mótorhjól", subSubcategories: ["Götuhjól", "Krosshjól", "Vespuhjól", "Fjórhjól", "Annað"] },
-        { value: "Hjólhýsi", subSubcategories: ["Tjaldvagnar", "Húsbílahúsgögn", "Annað"] },
-        { value: "Varahlutir", subSubcategories: ["Hjól og dekk", "Hljóðkerfi", "Ljós", "Innri hlutir", "Ytri hlutir", "Annað"] },
-        { value: "Fylgihlutir", subSubcategories: ["GPS og hleðsla", "Bifreiðaskraut", "Hreinsiefni", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Bækur, Kvikmyndir & Tónlist", 
-      label: "Bækur, Kvikmyndir & Tónlist",
-      subcategories: [
-        { value: "Bækur", subSubcategories: ["Skáldsögur", "Barnabækur", "Námsbækur", "Ævisögur", "Matreiðslubækur", "Annað"] },
-        { value: "Geisladiskar", subSubcategories: ["Kvikmyndir - DVD", "Kvikmyndir - Blu-ray", "Tónlist - CD", "Leikir", "Annað"] },
-        { value: "Vínylplötur", subSubcategories: ["Rokk", "Popp", "Jazz", "Klassík", "Annað"] },
-        { value: "Hljóðfæri", subSubcategories: ["Gítarar", "Píanó og hljómborð", "Trommur", "Strengir", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Leikföng & Barnabúnaður", 
-      label: "Leikföng & Barnabúnaður",
-      subcategories: [
-        { value: "Leikföng", subSubcategories: ["LEGO og byggingarkubbar", "Dúkkur", "Tölvuleikjaleikföng", "Bílar og vélar", "Spil", "Annað"] },
-        { value: "Barnavagnar", subSubcategories: ["Göngukerru", "Kerrur", "Tvíburavagnar", "Fylgihlutir", "Annað"] },
-        { value: "Barnastólar", subSubcategories: ["Hásæti", "Bílstólar", "Vaggsófar", "Annað"] },
-        { value: "Barnafatnaður", subSubcategories: ["Ungbörn (0-2 ára)", "Smábörn (2-5 ára)", "Börn (6+ ára)", "Skór", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Heilsa & Snyrtivörur", 
-      label: "Heilsa & Snyrtivörur",
-      subcategories: [
-        { value: "Snyrtivörur", subSubcategories: ["Förðun", "Neglur", "Ilmvatn", "Tól", "Annað"] },
-        { value: "Húðvörur", subSubcategories: ["Andlitskrem", "Húðhreinsivörur", "Sólarvörn", "Annað"] },
-        { value: "Heilsuvörur", subSubcategories: ["Vítamín", "Næringarefni", "Fyrstu hjálp", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Safngripir & List", 
-      label: "Safngripir & List",
-      subcategories: [
-        { value: "Listaverk", subSubcategories: ["Málverk", "Myndir", "Skúlptúrar", "Annað"] },
-        { value: "Fornmunir", subSubcategories: ["Húsgögn", "Skartgripir", "Myntir", "Annað"] },
-        { value: "Safnkort", subSubcategories: ["Íþróttakort", "Pokémon", "Magic", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Gæludýravörur", 
-      label: "Gæludýravörur",
-      subcategories: [
-        { value: "Hundavörur", subSubcategories: ["Hundfóður", "Leikföng", "Beð", "Hálsbönd og taumar", "Annað"] },
-        { value: "Kattavörur", subSubcategories: ["Kattafóður", "Húsgögn", "Leikföng", "Sandkassar", "Annað"] },
-        { value: "Fiskar & Búnaður", subSubcategories: ["Fiskabúr", "Síur", "Búnaður", "Fiskur", "Annað"] },
-        { value: "Fuglabúnaður", subSubcategories: ["Búr", "Fóður", "Leikföng", "Annað"] },
-        { value: "Smádýr", subSubcategories: ["Búr", "Fóður", "Annað"] },
-        { value: "Skriðdýr", subSubcategories: ["Terrarium", "Hiti og ljós", "Fóður", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Skartgripir & Úr", 
-      label: "Skartgripir & Úr",
-      subcategories: [
-        { value: "Úr", subSubcategories: ["Karlaúr", "Kvennaúr", "Snjallúr", "Fylgihlutir", "Annað"] },
-        { value: "Fínlegir skartgripir", subSubcategories: ["Hringir", "Hálsmen", "Armbönd", "Eyrnalokkar", "Annað"] },
-        { value: "Tískuskartgripir", subSubcategories: ["Hringir", "Hálsmen", "Armbönd", "Eyrnalokkar", "Annað"] },
-        { value: "Fornir skartgripir", subSubcategories: ["Hringir", "Broskar", "Hálsmen", "Annað"] },
-        { value: "Karlaskartgripir", subSubcategories: ["Hringir", "Armbönd", "Hálsmen", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Fyrirtæki & Iðnaður", 
-      label: "Fyrirtæki & Iðnaður",
-      subcategories: [
-        { value: "Veitingahúsabúnaður", subSubcategories: ["Eldhúsbúnaður", "Borðbúnaður", "Kælibúnaður", "Annað"] },
-        { value: "Heilbrigðisbúnaður", subSubcategories: ["Læknistæki", "Rannsóknarfæri", "Annað"] },
-        { value: "Þungavinnuvélar", subSubcategories: ["Gröfur", "Lyftarar", "Vélar", "Annað"] },
-        { value: "Rafbúnaður", subSubcategories: ["Strengir og kabal", "Rofa", "Ljós", "Annað"] },
-        { value: "Skrifstofubúnaður", subSubcategories: ["Prentarar", "Pappír", "Húsgögn", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Miðar & Ferðalög", 
-      label: "Miðar & Ferðalög",
-      subcategories: [
-        { value: "Tónleikamiðar", subSubcategories: ["Rokk og Popp", "Klassík", "Jazz", "Annað"] },
-        { value: "Íþróttamiðar", subSubcategories: ["Fótbolti", "Körfubolti", "Handbolti", "Annað"] },
-        { value: "Viðburðamiðar", subSubcategories: ["Leikhús", "Stand-up", "Viðburðir", "Annað"] },
-        { value: "Ferðapakkar", subSubcategories: ["Flug og hótel", "Rútupakkar", "Annað"] },
-        { value: "Farangur", subSubcategories: ["Ferðatöskur", "Bakpokar", "Handtöskur", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Þjónusta", 
-      label: "Þjónusta",
-      subcategories: [
-        { value: "Uppboðsþjónusta", subSubcategories: ["Skráning", "Ljósmyndun", "Annað"] },
-        { value: "Vef & Tölvuþjónusta", subSubcategories: ["Vefhönnun", "Forritun", "Tölvuviðgerðir", "Annað"] },
-        { value: "Prentun", subSubcategories: ["Nafnspjöld", "Merki", "Annað"] },
-        { value: "Viðgerðarþjónusta", subSubcategories: ["Tölvur", "Símar", "Annað"] },
-        { value: "Listaþjónusta", subSubcategories: ["Ljósmyndun", "Hönnun", "Annað"] },
-        { value: "Annað", subSubcategories: [] }
-      ]
-    },
-    { 
-      value: "Annað", 
-      label: "Annað",
-      subcategories: [
-        { value: "Annað", subSubcategories: [] }
-      ]
+    // Get search query from URL
+    const searchQuery = searchParams.get('search') || ''
+    const categoryParam = searchParams.get('category')
+
+    // Calculate filter counts from current listings
+    const getConditionCounts = () => {
+        if (!listings.length) return { New: 0, Used: 0, 'For Parts': 0 }
+        return {
+            New: listings.filter(l => l.condition === 'New').length,
+            Used: listings.filter(l => l.condition === 'Used').length,
+            'For Parts': listings.filter(l => l.condition === 'For Parts').length,
+        }
     }
-  ]
 
-  const loadListings = useCallback(async () => {
-    setLoading(true)
-    const result = await getListings({
-      search: searchQuery || undefined,
-      category: selectedCategory || undefined,
-      subcategory: selectedSubcategory || undefined,
-      subSubcategory: selectedSubSubcategory || undefined,
-      listingType: selectedListingType || undefined,
-      minPrice: minPrice ? parseFloat(minPrice) : undefined,
-      maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
-      page: currentPage,
-      pageSize
-    })
-    setListings(result.listings)
-    setTotalCount(result.totalCount)
-    setLoading(false)
-  }, [currentPage, searchQuery, selectedCategory, selectedSubcategory, selectedSubSubcategory, selectedListingType, minPrice, maxPrice])
+    const conditionCounts = getConditionCounts()
 
-  useEffect(() => {
-    loadListings()
-  }, [loadListings])
+    useEffect(() => {
+        if (categoryParam) {
+            setSelectedCategory(categoryParam)
+        }
+    }, [categoryParam])
 
-  function handleSearch(e: React.FormEvent) {
-    e.preventDefault()
-    setCurrentPage(1)
-    loadListings()
-  }
+    useEffect(() => {
+        async function loadListings() {
+            setLoading(true)
 
-  function clearFilters() {
-    setSearchQuery("")
-    setSelectedCategory("")
-    setSelectedSubcategory("")
-    setSelectedSubSubcategory("")
-    setMinPrice("")
-    setMaxPrice("")
-    setCurrentPage(1)
-  }
+            // Build API params based on filters
+            const apiParams: any = {
+                page: currentPage,
+                pageSize: 48
+            }
 
-  const totalPages = Math.ceil(totalCount / pageSize)
-  const hasActiveFilters = searchQuery || selectedCategory || selectedSubcategory || selectedSubSubcategory || minPrice || maxPrice
+            // Apply search query
+            if (searchQuery) {
+                apiParams.search = searchQuery
+            }
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      
-      <main className="flex-1 bg-muted/30">
-        <div className="container mx-auto px-4 py-8">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-3xl font-bold">{t("browse")}</h1>
-            <Button
-              variant="outline"
-              onClick={() => setShowFilters(!showFilters)}
-              className="lg:hidden"
-            >
-              <SlidersHorizontal className="mr-2 h-4 w-4" />
-              {t("filters")}
-            </Button>
-          </div>
+            // Apply category filter
+            if (selectedCategory) {
+                apiParams.category = selectedCategory
+            }
 
-          <div className="flex gap-6">
-            {/* Filters Sidebar */}
-            <aside className={`
-              ${showFilters ? 'block' : 'hidden'} lg:block
-              w-full lg:w-64 bg-background rounded-lg border p-6 h-fit
-            `}>
-              <div className="flex items-center justify-between mb-4">
-                <h2 className="text-lg font-semibold">{t("filters")}</h2>
-                {hasActiveFilters && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={clearFilters}
-                    className="text-xs"
-                  >
-                    <X className="h-3 w-3 mr-1" />
-                    {t("clear")}
-                  </Button>
-                )}
-              </div>
+            // Apply listing type filter
+            if (listingTypeFilter === "auction") {
+                apiParams.listingType = "auction"
+            } else if (listingTypeFilter === "buyNow") {
+                apiParams.listingType = "buyNow"
+            } else if (listingTypeFilter === "bestOffer") {
+                apiParams.acceptOffers = true
+            }
 
-              {/* Search */}
-              <div className="mb-6">
-                <Label htmlFor="search" className="mb-2 block">
-                  {t("search")}
-                </Label>
-                <form onSubmit={handleSearch} className="flex gap-2">
-                  <Input
-                    id="search"
-                    type="text"
-                    placeholder={t("searchPlaceholder")}
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                  />
-                  <Button type="submit" size="icon">
-                    <Search className="h-4 w-4" />
-                  </Button>
-                </form>
-              </div>
+            // Apply condition filter
+            if (conditionFilter !== "all") {
+                apiParams.condition = conditionFilter
+            }
 
-              {/* Category Filter */}
-              <div className="mb-6">
-                <Label className="mb-2 block">{t("category")}</Label>
-                <div className="space-y-1">
-                  <button
-                    onClick={() => {
-                      setSelectedCategory("")
-                      setSelectedSubcategory("")
-                      setSelectedSubSubcategory("")
-                      setCurrentPage(1)
-                    }}
-                    className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                      !selectedCategory
-                        ? 'bg-primary text-primary-foreground'
-                        : 'hover:bg-muted'
-                    }`}
-                  >
-                    {t("allCategories")}
-                  </button>
-                  
-                  {categories.map((category) => (
-                    <div key={category.value}>
-                      {/* Main Category Button */}
-                      <button
-                        onClick={() => {
-                          setSelectedCategory(category.value)
-                          setSelectedSubcategory("")
-                          setSelectedSubSubcategory("")
-                          setCurrentPage(1)
-                        }}
-                        className={`w-full text-left px-3 py-2 rounded-md text-sm transition-colors ${
-                          selectedCategory === category.value
-                            ? 'bg-primary text-primary-foreground'
-                            : 'hover:bg-muted'
-                        }`}
-                      >
-                        {t(category.value)}
-                      </button>
-                      
-                      {/* Subcategories - shown directly below if this category is selected */}
-                      {selectedCategory === category.value && category.subcategories.length > 0 && (
-                        <div className="ml-4 mt-1 space-y-1 border-l-2 border-primary/20 pl-2">
-                          <button
-                            onClick={() => {
-                              setSelectedSubcategory("")
-                              setSelectedSubSubcategory("")
-                              setCurrentPage(1)
-                            }}
-                            className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors ${
-                              !selectedSubcategory
-                                ? 'bg-primary/10 text-primary font-medium'
-                                : 'hover:bg-muted'
-                            }`}
-                          >
-                            {t("all")}
-                          </button>
-                          
-                          {category.subcategories.map((subcat) => (
-                            <div key={subcat.value}>
-                              {/* Subcategory Button */}
-                              <button
-                                onClick={() => {
-                                  setSelectedSubcategory(subcat.value)
-                                  setSelectedSubSubcategory("")
-                                  setCurrentPage(1)
-                                }}
-                                className={`w-full text-left px-3 py-1.5 rounded-md text-xs transition-colors ${
-                                  selectedSubcategory === subcat.value
-                                    ? 'bg-primary/10 text-primary font-medium'
-                                    : 'hover:bg-muted'
-                                }`}
-                              >
-                                {t(subcat.value)}
-                              </button>
-                              
-                              {/* Sub-subcategories - shown directly below if this subcategory is selected */}
-                              {selectedSubcategory === subcat.value && subcat.subSubcategories.length > 0 && (
-                                <div className="ml-4 mt-1 space-y-1 border-l-2 border-primary/10 pl-2">
-                                  <button
-                                    onClick={() => {
-                                      setSelectedSubSubcategory("")
-                                      setCurrentPage(1)
-                                    }}
-                                    className={`w-full text-left px-2 py-1 rounded-md text-xs transition-colors ${
-                                      !selectedSubSubcategory
-                                        ? 'bg-primary/5 text-primary font-medium'
-                                        : 'hover:bg-muted'
-                                    }`}
-                                  >
-                                    {t("all")}
-                                  </button>
-                                  
-                                  {subcat.subSubcategories.map((ssc, index) => (
-                                    <button
-                                      key={`${subcat.value}-${ssc}-${index}`}
-                                      onClick={() => {
-                                        setSelectedSubSubcategory(ssc)
-                                        setCurrentPage(1)
-                                      }}
-                                      className={`w-full text-left px-2 py-1 rounded-md text-xs transition-colors ${
-                                        selectedSubSubcategory === ssc
-                                          ? 'bg-primary/5 text-primary font-medium'
-                                          : 'hover:bg-muted'
-                                      }`}
-                                    >
-                                      {t(ssc)}
-                                    </button>
-                                  ))}
-                                </div>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  ))}
+            // Apply price filters
+            if (minPrice) {
+                apiParams.minPrice = parseFloat(minPrice)
+            }
+            if (maxPrice) {
+                apiParams.maxPrice = parseFloat(maxPrice)
+            }
+
+            const result = await getListings(apiParams)
+
+            // Apply client-side sorting
+            let sortedListings = [...result.listings]
+            switch (sortOption) {
+                case "endingSoonest":
+                    sortedListings.sort((a, b) => {
+                        if (!a.endDate) return 1
+                        if (!b.endDate) return -1
+                        return new Date(a.endDate).getTime() - new Date(b.endDate).getTime()
+                    })
+                    break
+                case "newlyListed":
+                    sortedListings.sort((a, b) => {
+                        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                    })
+                    break
+                case "priceLowest":
+                    sortedListings.sort((a, b) => a.price - b.price)
+                    break
+                case "priceHighest":
+                    sortedListings.sort((a, b) => b.price - a.price)
+                    break
+            }
+
+            setListings(sortedListings)
+            setTotalCount(result.totalCount || sortedListings.length)
+            setLoading(false)
+        }
+
+        loadListings()
+    }, [searchQuery, selectedCategory, currentPage, listingTypeFilter, conditionFilter, minPrice, maxPrice, sortOption])
+
+    const pageCount = Math.ceil(totalCount / 48)
+
+    // Helper to check if any filters are active
+    const hasActiveFilters = selectedCategory !== null || conditionFilter !== "all" || minPrice !== "" || maxPrice !== "" || listingTypeFilter !== "all"
+
+    // Helper to clear all filters
+    const clearAllFilters = () => {
+        setSelectedCategory(null)
+        setConditionFilter("all")
+        setMinPrice("")
+        setMaxPrice("")
+        setListingTypeFilter("all")
+    }
+
+    return (
+        <div className="min-h-screen bg-gray-50">
+            <Header />
+
+            <main className="max-w-[1400px] mx-auto px-6 py-6">
+                {/* Breadcrumbs */}
+                <div className="flex items-center gap-2 text-sm text-muted-foreground mb-4">
+                    <Link href="/" className="hover:text-primary">Home</Link>
+                    <ChevronRight className="w-4 h-4" />
+                    <span className="text-foreground font-medium">
+                        {searchQuery ? `Search: "${searchQuery}"` : 'All Listings'}
+                    </span>
                 </div>
-              </div>
 
-              {/* Price Range */}
-              <div className="mb-6">
-                <Label className="mb-2 block">{t("priceRange")}</Label>
-                <div className="space-y-2">
-                  <Input
-                    type="number"
-                    placeholder={t("minPrice")}
-                    value={minPrice}
-                    onChange={(e) => setMinPrice(e.target.value)}
-                    min="0"
-                    step="100"
-                  />
-                  <Input
-                    type="number"
-                    placeholder={t("maxPrice")}
-                    value={maxPrice}
-                    onChange={(e) => setMaxPrice(e.target.value)}
-                    min="0"
-                    step="100"
-                  />
-                </div>
-              </div>
+                {/* Results Count - Prominent */}
+                <div className="mb-6">
+                    <h1 className="text-2xl font-bold mb-2">
+                        {totalCount.toLocaleString()} {totalCount === 1 ? "result" : "results"} 
+                        {searchQuery && ` for "${searchQuery}"`}
+                    </h1>
+                    
+                    {/* Active Filter Chips */}
+                    {hasActiveFilters && (
+                        <div className="flex flex-wrap items-center gap-2 mt-3">
+                            <span className="text-sm text-muted-foreground">Filters:</span>
+                            
+                            {selectedCategory && (
+                                <button
+                                    onClick={() => setSelectedCategory(null)}
+                                    className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 transition-colors"
+                                >
+                                    {categories.find(c => c.value === selectedCategory)?.label || selectedCategory}
+                                    <X className="h-3 w-3" />
+                                </button>
+                            )}
 
-              <Button
-                onClick={() => {
-                  setCurrentPage(1)
-                  loadListings()
-                }}
-                className="w-full"
-              >
-                {t("applyFilters")}
-              </Button>
-            </aside>
+                            {conditionFilter !== "all" && (
+                                <button
+                                    onClick={() => setConditionFilter("all")}
+                                    className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 transition-colors"
+                                >
+                                    Condition: {conditionFilter}
+                                    <X className="h-3 w-3" />
+                                </button>
+                            )}
 
-            {/* Listings Grid */}
-            <div className="flex-1">
-              {/* Results Header */}
-              <div className="mb-4 flex items-center justify-between">
-                <p className="text-sm text-muted-foreground">
-                  {loading ? (
-                    t("loading")
-                  ) : (
-                    <>
-                      {totalCount} {totalCount === 1 ? t("result") : t("results")}
-                    </>
-                  )}
-                </p>
-              </div>
+                            {listingTypeFilter !== "all" && (
+                                <button
+                                    onClick={() => setListingTypeFilter("all")}
+                                    className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 transition-colors"
+                                >
+                                    {listingTypeFilter === "auction" && "Auction"}
+                                    {listingTypeFilter === "buyNow" && "Buy It Now"}
+                                    {listingTypeFilter === "bestOffer" && "Best Offer"}
+                                    <X className="h-3 w-3" />
+                                </button>
+                            )}
 
-              {/* Listings Grid */}
-              {loading ? (
-                <div className="text-center py-12 text-muted-foreground">
-                  {t("loading")}
-                </div>
-              ) : listings.length === 0 ? (
-                <div className="text-center py-12">
-                  <p className="text-muted-foreground mb-4">{t("noResults")}</p>
-                  {hasActiveFilters && (
-                    <Button onClick={clearFilters} variant="outline">
-                      {t("clearFilters")}
-                    </Button>
-                  )}
-                </div>
-              ) : (
-                <>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {listings.map((listing) => (
-                      <ListingCard key={listing.id} listing={listing} />
-                    ))}
-                  </div>
+                            {(minPrice || maxPrice) && (
+                                <button
+                                    onClick={() => { setMinPrice(""); setMaxPrice("") }}
+                                    className="inline-flex items-center gap-1 px-3 py-1 bg-primary/10 text-primary rounded-full text-sm hover:bg-primary/20 transition-colors"
+                                >
+                                    Price: {minPrice && `$${minPrice}`}{minPrice && maxPrice && " - "}{maxPrice && `$${maxPrice}`}
+                                    <X className="h-3 w-3" />
+                                </button>
+                            )}
 
-                  {/* Pagination */}
-                  {totalPages > 1 && (
-                    <div className="mt-8 flex justify-center gap-2">
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                        disabled={currentPage === 1}
-                      >
-                        {t("previous")}
-                      </Button>
-                      
-                      <div className="flex items-center gap-2">
-                        {Array.from({ length: Math.min(5, totalPages) }, (_, i) => {
-                          let pageNum
-                          if (totalPages <= 5) {
-                            pageNum = i + 1
-                          } else if (currentPage <= 3) {
-                            pageNum = i + 1
-                          } else if (currentPage >= totalPages - 2) {
-                            pageNum = totalPages - 4 + i
-                          } else {
-                            pageNum = currentPage - 2 + i
-                          }
-                          
-                          return (
-                            <Button
-                              key={pageNum}
-                              variant={currentPage === pageNum ? "default" : "outline"}
-                              onClick={() => setCurrentPage(pageNum)}
-                              className="w-10"
+                            <button
+                                onClick={clearAllFilters}
+                                className="text-sm text-primary hover:underline ml-2"
                             >
-                              {pageNum}
-                            </Button>
-                          )
-                        })}
-                      </div>
+                                Clear all
+                            </button>
+                        </div>
+                    )}
+                </div>
 
-                      <Button
-                        variant="outline"
-                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                        disabled={currentPage === totalPages}
-                      >
-                        {t("next")}
-                      </Button>
+                <div className="flex gap-6">
+                    {/* Sidebar Filters */}
+                    <aside className="hidden lg:block w-[280px] flex-shrink-0">
+                        <div className="bg-white rounded-lg p-4 shadow-sm sticky top-4">
+                            <div className="flex items-center justify-between mb-4">
+                                <h2 className="font-bold text-lg">Filters</h2>
+                                {hasActiveFilters && (
+                                    <button
+                                        onClick={clearAllFilters}
+                                        className="text-sm text-primary hover:underline"
+                                    >
+                                        Clear all
+                                    </button>
+                                )}
+                            </div>
+
+                            {/* Category Filter */}
+                            <div className="mb-6 pb-6 border-b">
+                                <h3 className="font-semibold mb-3 text-sm">Category</h3>
+                                <div className="space-y-1">
+                                    <button
+                                        onClick={() => setSelectedCategory(null)}
+                                        className={`w-full text-left px-3 py-2 rounded text-sm flex items-center justify-between ${selectedCategory === null
+                                                ? "bg-primary/10 text-primary font-medium"
+                                                : "hover:bg-muted"
+                                            }`}
+                                    >
+                                        <span>All Categories</span>
+                                        <span className="text-xs text-muted-foreground">{totalCount}</span>
+                                    </button>
+                                    {categories.map((cat) => {
+                                        const catCount = listings.filter(l => l.category === cat.value).length
+                                        return (
+                                            <button
+                                                key={cat.value}
+                                                onClick={() => setSelectedCategory(cat.value)}
+                                                className={`w-full text-left px-3 py-2 rounded text-sm flex items-center justify-between ${selectedCategory === cat.value
+                                                        ? "bg-primary/10 text-primary font-medium"
+                                                        : "hover:bg-muted"
+                                                    }`}
+                                            >
+                                                <span>{cat.label}</span>
+                                                {catCount > 0 && (
+                                                    <span className="text-xs text-muted-foreground">({catCount})</span>
+                                                )}
+                                            </button>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+
+                            {/* Condition Filter */}
+                            <div className="mb-6 pb-6 border-b">
+                                <h3 className="font-semibold mb-3 text-sm">Condition</h3>
+                                <div className="space-y-1">
+                                    <button
+                                        onClick={() => setConditionFilter("all")}
+                                        className={`w-full text-left px-3 py-2 rounded text-sm flex items-center justify-between ${conditionFilter === "all"
+                                                ? "bg-primary/10 text-primary font-medium"
+                                                : "hover:bg-muted"
+                                            }`}
+                                    >
+                                        <span>All Conditions</span>
+                                    </button>
+                                    <button
+                                        onClick={() => setConditionFilter("New")}
+                                        className={`w-full text-left px-3 py-2 rounded text-sm flex items-center justify-between ${conditionFilter === "New"
+                                                ? "bg-primary/10 text-primary font-medium"
+                                                : "hover:bg-muted"
+                                            }`}
+                                    >
+                                        <span>New</span>
+                                        {conditionCounts.New > 0 && (
+                                            <span className="text-xs text-muted-foreground">({conditionCounts.New})</span>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => setConditionFilter("Used")}
+                                        className={`w-full text-left px-3 py-2 rounded text-sm flex items-center justify-between ${conditionFilter === "Used"
+                                                ? "bg-primary/10 text-primary font-medium"
+                                                : "hover:bg-muted"
+                                            }`}
+                                    >
+                                        <span>Used</span>
+                                        {conditionCounts.Used > 0 && (
+                                            <span className="text-xs text-muted-foreground">({conditionCounts.Used})</span>
+                                        )}
+                                    </button>
+                                    <button
+                                        onClick={() => setConditionFilter("For Parts")}
+                                        className={`w-full text-left px-3 py-2 rounded text-sm flex items-center justify-between ${conditionFilter === "For Parts"
+                                                ? "bg-primary/10 text-primary font-medium"
+                                                : "hover:bg-muted"
+                                            }`}
+                                    >
+                                        <span>For Parts</span>
+                                        {conditionCounts['For Parts'] > 0 && (
+                                            <span className="text-xs text-muted-foreground">({conditionCounts['For Parts']})</span>
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+
+                            {/* Price Filter */}
+                            <div className="mb-6">
+                                <h3 className="font-semibold mb-3 text-sm">Price Range</h3>
+                                <div className="space-y-2">
+                                    <Input
+                                        type="number"
+                                        placeholder="Min"
+                                        value={minPrice}
+                                        onChange={(e) => setMinPrice(e.target.value)}
+                                        className="w-full"
+                                    />
+                                    <Input
+                                        type="number"
+                                        placeholder="Max"
+                                        value={maxPrice}
+                                        onChange={(e) => setMaxPrice(e.target.value)}
+                                        className="w-full"
+                                    />
+                                    {(minPrice || maxPrice) && (
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => {
+                                                setMinPrice("")
+                                                setMaxPrice("")
+                                            }}
+                                            className="w-full"
+                                        >
+                                            Clear Price
+                                        </Button>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+
+                    {/* Main Content */}
+                    <div className="flex-1">
+
+                        {/* Top Controls Bar */}
+                        <div className="p-4 pb-0">
+                            {/* First Row: Listing Type Slider & Sort/View Controls */}
+                            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+                                {/* Listing Type Slider */}
+                                <div className="bg-background border-1 rounded-full flex items-center gap-2 overflow-x-auto p-0.5">
+                                    <button
+                                        onClick={() => setListingTypeFilter("all")}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${listingTypeFilter === "all"
+                                                ? "bg-primary text-primary-foreground"
+                                                : "hover:bg-muted/80"
+                                            }`}
+                                    >
+                                        All Listings
+                                    </button>
+                                    <button
+                                        onClick={() => setListingTypeFilter("auction")}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${listingTypeFilter === "auction"
+                                                ? "bg-primary text-primary-foreground"
+                                                : "hover:bg-muted/80"
+                                            }`}
+                                    >
+                                        Auction
+                                    </button>
+                                    <button
+                                        onClick={() => setListingTypeFilter("buyNow")}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${listingTypeFilter === "buyNow"
+                                                ? "bg-primary text-primary-foreground"
+                                                : "hover:bg-muted/80"
+                                            }`}
+                                    >
+                                        Buy It Now
+                                    </button>
+                                    <button
+                                        onClick={() => setListingTypeFilter("bestOffer")}
+                                        className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${listingTypeFilter === "bestOffer"
+                                                ? "bg-primary text-primary-foreground"
+                                                : "hover:bg-muted/80"
+                                            }`}
+                                    >
+                                        Best Offer
+                                    </button>
+                                </div>
+
+                                {/* Sort & View Controls */}
+                                <div className="flex items-center gap-4">
+                                    {/* Sort Dropdown */}
+                                    <div className="relative">
+                                        <button
+                                            onClick={() => setShowSortDropdown(!showSortDropdown)}
+                                            className="flex items-center gap-2 px-4 py-2 border rounded-md text-sm bg-background hover:bg-muted transition-colors"
+                                        >
+                                            <span className="font-medium">Sort:</span>
+                                            <span>
+                                                {sortOption === "bestMatch" && "Best Match"}
+                                                {sortOption === "endingSoonest" && "Time: ending soonest"}
+                                                {sortOption === "newlyListed" && "Time: newly listed"}
+                                                {sortOption === "priceLowest" && "Price: lowest"}
+                                                {sortOption === "priceHighest" && "Price: highest"}
+                                            </span>
+                                            <ChevronDown className="h-4 w-4" />
+                                        </button>
+
+                                        {showSortDropdown && (
+                                            <>
+                                                <div
+                                                    className="fixed inset-0 z-10"
+                                                    onClick={() => setShowSortDropdown(false)}
+                                                />
+                                                <div className="absolute right-0 mt-2 w-56 bg-background border rounded-md shadow-lg z-20">
+                                                    <button
+                                                        onClick={() => {
+                                                            setSortOption("bestMatch")
+                                                            setShowSortDropdown(false)
+                                                        }}
+                                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${sortOption === "bestMatch" ? "bg-primary/10 text-primary font-medium" : ""
+                                                            }`}
+                                                    >
+                                                        Best Match
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSortOption("endingSoonest")
+                                                            setShowSortDropdown(false)
+                                                        }}
+                                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${sortOption === "endingSoonest" ? "bg-primary/10 text-primary font-medium" : ""
+                                                            }`}
+                                                    >
+                                                        Time: ending soonest
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSortOption("newlyListed")
+                                                            setShowSortDropdown(false)
+                                                        }}
+                                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${sortOption === "newlyListed" ? "bg-primary/10 text-primary font-medium" : ""
+                                                            }`}
+                                                    >
+                                                        Time: newly listed
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSortOption("priceLowest")
+                                                            setShowSortDropdown(false)
+                                                        }}
+                                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${sortOption === "priceLowest" ? "bg-primary/10 text-primary font-medium" : ""
+                                                            }`}
+                                                    >
+                                                        Price: lowest
+                                                    </button>
+                                                    <button
+                                                        onClick={() => {
+                                                            setSortOption("priceHighest")
+                                                            setShowSortDropdown(false)
+                                                        }}
+                                                        className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${sortOption === "priceHighest" ? "bg-primary/10 text-primary font-medium" : ""
+                                                            }`}
+                                                    >
+                                                        Price: highest
+                                                    </button>
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+
+                                    {/* View Mode Toggle */}
+                                    <div className="flex items-center gap-1 border rounded-md p-1">
+                                        <button
+                                            onClick={() => setViewMode("gallery")}
+                                            className={`p-2 rounded transition-colors ${viewMode === "gallery"
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "hover:bg-muted"
+                                                }`}
+                                            title="Gallery View"
+                                        >
+                                            <Grid3x3 className="h-4 w-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setViewMode("list")}
+                                            className={`p-2 rounded transition-colors ${viewMode === "list"
+                                                    ? "bg-primary text-primary-foreground"
+                                                    : "hover:bg-muted"
+                                                }`}
+                                            title="List View"
+                                        >
+                                            <List className="h-4 w-4" />
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Horizontal Divider */}
+                            <div className="border-t my-4"></div>
+                        </div>
+
+                        {/* Listings Section */}
+                        {loading ? (
+                            <div className="text-center py-12">
+                                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+                                <p className="mt-4 text-gray-600">Loading listings...</p>
+                            </div>
+                        ) : listings.length === 0 ? (
+                            <div className="text-center py-12 bg-white rounded-lg">
+                                <p className="text-muted-foreground mb-2">No listings found matching your criteria.</p>
+                                {hasActiveFilters && (
+                                    <Button
+                                        onClick={clearAllFilters}
+                                        className="mt-4"
+                                    >
+                                        Clear All Filters
+                                    </Button>
+                                )}
+                            </div>
+                        ) : (
+                            <>
+                                {/* Listings Grid */}
+                                <div
+                                    className={
+                                        viewMode === "gallery"
+                                            ? "grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4"
+                                            : "flex flex-col gap-4"
+                                    }
+                                >
+                                    {listings.map((listing) => (
+                                        <ListingCard
+                                            key={listing.id}
+                                            listing={listing}
+                                        />
+                                    ))}
+                                </div>
+
+                                {/* Pagination */}
+                                {pageCount > 1 && (
+                                    <div className="flex justify-center items-center gap-2 mt-8">
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                                            disabled={currentPage === 1}
+                                        >
+                                            Previous
+                                        </Button>
+                                        <span className="text-sm text-gray-600">
+                                            Page {currentPage} of {pageCount}
+                                        </span>
+                                        <Button
+                                            variant="outline"
+                                            onClick={() => setCurrentPage((p) => Math.min(pageCount, p + 1))}
+                                            disabled={currentPage === pageCount}
+                                        >
+                                            Next
+                                        </Button>
+                                    </div>
+                                )}
+                            </>
+                        )}
                     </div>
-                  )}
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </main>
+                </div>
 
-      <footer className="border-t py-8 bg-muted/30">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2025 Kaup. Öll réttindi áskilin.</p>
+                {/* Mobile Filter Button */}
+                <button
+                    onClick={() => setShowMobileFilters(true)}
+                    className="lg:hidden fixed bottom-6 right-6 bg-blue-600 text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 hover:bg-blue-700 transition-colors z-10"
+                >
+                    <SlidersHorizontal className="w-5 h-5" />
+                    Filters
+                </button>
+
+                {/* Mobile Filters Modal */}
+                {showMobileFilters && (
+                    <div className="lg:hidden fixed inset-0 z-50 bg-black bg-opacity-50">
+                        <div className="absolute right-0 top-0 bottom-0 w-full max-w-sm bg-white shadow-xl overflow-y-auto">
+                            <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+                                <h2 className="font-bold text-lg">Filters</h2>
+                                <button
+                                    onClick={() => setShowMobileFilters(false)}
+                                    className="p-2 hover:bg-gray-100 rounded"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+
+                            <div className="p-4">
+                                {/* Category Filter */}
+                                <div className="mb-6">
+                                    <h3 className="font-semibold mb-2">Category</h3>
+                                    <div className="space-y-2">
+                                        <button
+                                            onClick={() => {
+                                                setSelectedCategory(null)
+                                                setShowMobileFilters(false)
+                                            }}
+                                            className={`w-full text-left px-3 py-2 rounded text-sm ${selectedCategory === null
+                                                    ? "bg-primary/10 text-primary font-medium"
+                                                    : "hover:bg-muted"
+                                                }`}
+                                        >
+                                            All Categories
+                                        </button>
+                                        {categories.map((cat) => (
+                                            <button
+                                                key={cat.value}
+                                                onClick={() => {
+                                                    setSelectedCategory(cat.value)
+                                                    setShowMobileFilters(false)
+                                                }}
+                                                className={`w-full text-left px-3 py-2 rounded text-sm ${selectedCategory === cat.value
+                                                        ? "bg-primary/10 text-primary font-medium"
+                                                        : "hover:bg-muted"
+                                                    }`}
+                                            >
+                                                {cat.label}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                {/* Condition Filter */}
+                                <div className="mb-6">
+                                    <h3 className="font-semibold mb-2">Condition</h3>
+                                    <div className="space-y-2">
+                                        <button
+                                            onClick={() => {
+                                                setConditionFilter("all")
+                                                setShowMobileFilters(false)
+                                            }}
+                                            className={`w-full text-left px-3 py-2 rounded text-sm ${conditionFilter === "all"
+                                                    ? "bg-primary/10 text-primary font-medium"
+                                                    : "hover:bg-muted"
+                                                }`}
+                                        >
+                                            All Conditions
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setConditionFilter("New")
+                                                setShowMobileFilters(false)
+                                            }}
+                                            className={`w-full text-left px-3 py-2 rounded text-sm ${conditionFilter === "New"
+                                                    ? "bg-primary/10 text-primary font-medium"
+                                                    : "hover:bg-muted"
+                                                }`}
+                                        >
+                                            New
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setConditionFilter("Used")
+                                                setShowMobileFilters(false)
+                                            }}
+                                            className={`w-full text-left px-3 py-2 rounded text-sm ${conditionFilter === "Used"
+                                                    ? "bg-primary/10 text-primary font-medium"
+                                                    : "hover:bg-muted"
+                                                }`}
+                                        >
+                                            Used
+                                        </button>
+                                        <button
+                                            onClick={() => {
+                                                setConditionFilter("For Parts")
+                                                setShowMobileFilters(false)
+                                            }}
+                                            className={`w-full text-left px-3 py-2 rounded text-sm ${conditionFilter === "For Parts"
+                                                    ? "bg-primary/10 text-primary font-medium"
+                                                    : "hover:bg-muted"
+                                                }`}
+                                        >
+                                            For Parts
+                                        </button>
+                                    </div>
+                                </div>
+
+                                {/* Price Filter */}
+                                <div className="mb-6">
+                                    <h3 className="font-semibold mb-2">Price Range</h3>
+                                    <div className="space-y-2">
+                                        <Input
+                                            type="number"
+                                            placeholder="Min"
+                                            value={minPrice}
+                                            onChange={(e) => setMinPrice(e.target.value)}
+                                            className="w-full"
+                                        />
+                                        <Input
+                                            type="number"
+                                            placeholder="Max"
+                                            value={maxPrice}
+                                            onChange={(e) => setMaxPrice(e.target.value)}
+                                            className="w-full"
+                                        />
+                                        {(minPrice || maxPrice) && (
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => {
+                                                    setMinPrice("")
+                                                    setMaxPrice("")
+                                                }}
+                                                className="w-full"
+                                            >
+                                                Clear Price
+                                            </Button>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="p-4 border-t border-gray-200">
+                                <Button
+                                    onClick={() => setShowMobileFilters(false)}
+                                    className="w-full"
+                                >
+                                    Apply Filters
+                                </Button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </main>
         </div>
-      </footer>
-    </div>
-  )
+    )
 }

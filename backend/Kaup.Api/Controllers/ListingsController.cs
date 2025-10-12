@@ -4,6 +4,7 @@ using Kaup.Api.Data;
 using Kaup.Api.Models;
 using Kaup.Api.DTOs;
 using Kaup.Api.Services;
+using Kaup.Api.Helpers;
 using System.Text.Json;
 
 namespace Kaup.Api.Controllers;
@@ -87,7 +88,10 @@ public class ListingsController : ControllerBase
             query = query.Where(l => l.SubSubcategory == subSubcategory);
 
         if (!string.IsNullOrEmpty(search))
-            query = query.Where(l => l.Title.Contains(search) || l.Description.Contains(search));
+        {
+            var lowerSearch = search.ToLower();
+            query = query.Where(l => l.Title.ToLower().Contains(lowerSearch) || l.Description.ToLower().Contains(lowerSearch));
+        }
 
         if (minPrice.HasValue)
             query = query.Where(l => l.Price >= minPrice.Value);
@@ -159,7 +163,28 @@ public class ListingsController : ControllerBase
         return Ok(listings);
     }
 
-    [HttpGet("{id}")]
+    [HttpGet("search-suggestions")]
+    public async Task<ActionResult<object>> GetSearchSuggestions([FromQuery] string? query, [FromQuery] int limit = 10)
+    {
+        if (string.IsNullOrWhiteSpace(query) || query.Length < 2)
+            return Ok(new { titles = Array.Empty<string>() });
+
+        var lowerQuery = query.ToLower();
+        
+        // Get title suggestions from active listings - only titles that START with the query, converted to lowercase
+        var titleSuggestions = await _context.Listings
+            .Where(l => l.Status == ListingStatus.Active && l.Title.ToLower().StartsWith(lowerQuery))
+            .Select(l => l.Title.ToLower())
+            .Distinct()
+            .Take(8)
+            .ToListAsync();
+
+        return Ok(new { 
+            titles = titleSuggestions
+        });
+    }
+
+    [HttpGet("{id:guid}")]
     public async Task<ActionResult<ListingDto>> GetListing(Guid id)
     {
         var listing = await _context.Listings

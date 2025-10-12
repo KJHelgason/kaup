@@ -1,9 +1,8 @@
 "use client"
 
-import { Moon, Sun, Search, User, LogOut, LogIn, UserPlus, Bell, Package, ShoppingCart, Heart, MessageSquare, ChevronDown } from "lucide-react"
+import { Moon, Sun, User, LogOut, LogIn, UserPlus, Bell, Package, ShoppingCart, Heart, MessageSquare, ChevronDown } from "lucide-react"
 import { useTheme } from "next-themes"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +17,7 @@ import { useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 import { getNotifications, getUnreadNotificationCount, markNotificationAsRead, markAllNotificationsAsRead, Notification, getCartCount, getUnreadMessageCount, getConversations } from "@/lib/api"
 import { CategoryDropdown } from "@/components/CategoryDropdown"
+import { SearchWithCategory } from "@/components/SearchWithCategory"
 
 export function Header() {
   const { theme, setTheme } = useTheme()
@@ -142,11 +142,11 @@ export function Header() {
 
   return (
     <header className="border-b sticky top-0 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 z-50">
-      <div className="container mx-auto px-4 py-4">
+      <div className="max-w-[1400px] mx-auto px-6 py-4">
         {/* Top Row - Logo, Search, Actions */}
         <div className="flex items-center justify-between gap-4">
           {/* Logo and Shop by Category */}
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4 flex-shrink-0">
             <Link href="/" className="flex items-center space-x-2">
               <div className="flex items-center justify-center w-10 h-10 bg-primary text-primary-foreground rounded-lg font-bold text-xl">
                 K
@@ -173,15 +173,8 @@ export function Header() {
           </div>
 
           {/* Search Bar */}
-          <div className="flex-1 max-w-2xl hidden md:flex">
-            <div className="relative w-full">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder={t('searchPlaceholder')}
-                className="pl-10 w-full"
-              />
-            </div>
+          <div className="flex-1 hidden md:flex">
+            <SearchWithCategory />
           </div>
 
           {/* Right Actions */}
@@ -360,14 +353,7 @@ export function Header() {
 
         {/* Mobile Search */}
         <div className="md:hidden mt-4">
-          <div className="relative w-full">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder={t('searchPlaceholder')}
-              className="pl-10 w-full"
-            />
-          </div>
+          <SearchWithCategory />
         </div>
       </div>
     </header>

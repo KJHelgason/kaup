@@ -119,7 +119,7 @@ export default function Home() {
       
       <main className="flex-1">
         <section className="bg-gradient-to-b from-muted/50 to-background py-16 md:py-24">
-          <div className="container mx-auto px-4 text-center">
+          <div className="max-w-[1400px] mx-auto px-6 text-center">
             <h1 className="text-4xl md:text-6xl font-bold mb-4">
               {t("welcome")}
             </h1>
@@ -143,7 +143,7 @@ export default function Home() {
 
         {/* Featured Listings Section - MOVED TO TOP */}
         <section className="py-12 md:py-16">
-          <div className="container mx-auto px-4">
+          <div className="max-w-[1400px] mx-auto px-6">
             <div className="flex items-center justify-between mb-8">
               <h2 className="text-3xl font-bold">
                 {t("featuredListings")}
@@ -206,7 +206,7 @@ export default function Home() {
 
         {/* Featured Auctions Section - MOVED TO BOTTOM */}
         <section className="py-12 md:py-16 bg-muted/30">
-          <div className="container mx-auto px-4">
+          <div className="max-w-[1400px] mx-auto px-6">
             <div className="flex items-center justify-between mb-8">
               <div className="flex items-center gap-3">
                 <Clock className="w-8 h-8 text-primary" />
@@ -276,7 +276,7 @@ export default function Home() {
       </main>
 
       <footer className="border-t py-8 bg-muted/30">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
+        <div className="max-w-[1400px] mx-auto px-6 text-center text-sm text-muted-foreground">
           <p>© 2025 Kaup. Öll réttindi áskilin.</p>
         </div>
       </footer>
