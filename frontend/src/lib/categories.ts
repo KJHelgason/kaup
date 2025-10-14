@@ -1,6 +1,7 @@
 export interface Category {
   value: string
   label: string
+  labelEn?: string // English label
   slug: string // English URL-friendly slug
   subcategories: {
     value: string
@@ -175,6 +176,7 @@ export const categories: Category[] = [
   { 
     value: "Rafeindatækni", 
     label: "Rafeindatækni",
+    labelEn: "Electronics",
     slug: "electronics",
     subcategories: [
       { value: "Símar og spjaldtölvur", slug: "phones-tablets", subSubcategories: ["Snjallsímar", "Spjaldtölvur", "Símahlífar og fylgihlutir", "Hleðslutæki", "Annað"] },
@@ -188,6 +190,7 @@ export const categories: Category[] = [
   { 
     value: "Tíska", 
     label: "Tíska",
+    labelEn: "Fashion",
     slug: "fashion",
     subcategories: [
       { value: "Föt - Karlar", slug: "mens-clothing", subSubcategories: ["Jakkar og kápur", "Bolir og skyrtur", "Buxur", "Jakkafatnaður", "Íþróttafatnaður", "Annað"] },
@@ -201,6 +204,7 @@ export const categories: Category[] = [
   { 
     value: "Heimili & Garður", 
     label: "Heimili & Garður",
+    labelEn: "Home & Garden",
     slug: "home-garden",
     subcategories: [
       { value: "Húsgögn", slug: "furniture", subSubcategories: ["Sófar og stólar", "Borð", "Rúm", "Skápar", "Hillur", "Annað"] },
@@ -214,6 +218,7 @@ export const categories: Category[] = [
   { 
     value: "Íþróttir & Útivist", 
     label: "Íþróttir & Útivist",
+    labelEn: "Sports & Outdoors",
     slug: "sports-outdoors",
     subcategories: [
       { value: "Líkamsræktarbúnaður", slug: "fitness", subSubcategories: ["Lóð og búnaður", "Jógabúnaður", "Hjólreiðaþjálfar", "Hlaupaborð", "Annað"] },
@@ -227,6 +232,7 @@ export const categories: Category[] = [
   { 
     value: "Farartæki", 
     label: "Farartæki",
+    labelEn: "Vehicles",
     slug: "vehicles",
     subcategories: [
       { value: "Bílar", slug: "cars", subSubcategories: ["Fólksbílar", "Jeppar", "Sportbílar", "Húsbílar", "Annað"] },
@@ -240,6 +246,7 @@ export const categories: Category[] = [
   { 
     value: "Bækur, Kvikmyndir & Tónlist", 
     label: "Bækur, Kvikmyndir & Tónlist",
+    labelEn: "Books, Movies & Music",
     slug: "books-movies-music",
     subcategories: [
       { value: "Bækur", slug: "books", subSubcategories: ["Skáldsögur", "Barnabækur", "Námsbækur", "Ævisögur", "Matreiðslubækur", "Annað"] },
@@ -264,6 +271,7 @@ export const categories: Category[] = [
   { 
     value: "Heilsa & Snyrtivörur", 
     label: "Heilsa & Snyrtivörur",
+    labelEn: "Health & Beauty",
     slug: "health-beauty",
     subcategories: [
       { value: "Snyrtivörur", slug: "cosmetics", subSubcategories: ["Förðun", "Neglur", "Ilmvatn", "Tól", "Annað"] },
@@ -275,6 +283,7 @@ export const categories: Category[] = [
   { 
     value: "Safngripir & List", 
     label: "Safngripir & List",
+    labelEn: "Collectibles & Art",
     slug: "collectibles-art",
     subcategories: [
       { value: "Listaverk", slug: "art", subSubcategories: ["Málverk", "Myndir", "Skúlptúrar", "Annað"] },
@@ -286,6 +295,7 @@ export const categories: Category[] = [
   { 
     value: "Gæludýravörur", 
     label: "Gæludýravörur",
+    labelEn: "Pet Supplies",
     slug: "pet-supplies",
     subcategories: [
       { value: "Hundavörur", slug: "dogs", subSubcategories: ["Hundfóður", "Leikföng", "Beð", "Hálsbönd og taumar", "Annað"] },
@@ -300,6 +310,7 @@ export const categories: Category[] = [
   { 
     value: "Skartgripir & Úr", 
     label: "Skartgripir & Úr",
+    labelEn: "Jewelry & Watches",
     slug: "jewelry-watches",
     subcategories: [
       { value: "Úr", slug: "watches", subSubcategories: ["Karlaúr", "Kvennaúr", "Snjallúr", "Fylgihlutir", "Annað"] },

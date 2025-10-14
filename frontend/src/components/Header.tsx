@@ -343,9 +343,6 @@ export function Header() {
           <Link href="/" className="hover:text-primary transition-colors font-medium">
             {t('home')}
           </Link>
-          <Link href="/browse" className="hover:text-primary transition-colors">
-            {t('browse')}
-          </Link>
           <Link href="/sell" className="hover:text-primary transition-colors">
             {t('sell')}
           </Link>

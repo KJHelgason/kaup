@@ -138,3 +138,56 @@
 .scrollbar-hide::-webkit-scrollbar {
   display: none;  /* Chrome, Safari and Opera */
 }
+
+/* Price range slider styles */
+.slider-thumb-primary {
+  height: 16px;
+  margin: 0;
+  pointer-events: none;
+}
+
+.slider-thumb-primary::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: oklch(0.208 0.042 265.755);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  margin-top: 0;
+  pointer-events: auto;
+}
+
+.slider-thumb-primary:active::-webkit-slider-thumb {
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.slider-thumb-primary::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: oklch(0.208 0.042 265.755);
+  cursor: pointer;
+  border: 2px solid white;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  pointer-events: auto;
+}
+
+.slider-thumb-primary:active::-moz-range-thumb {
+  cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+.slider-thumb-primary::-webkit-slider-runnable-track {
+  height: 1px;
+  background: transparent;
+  border: none;
+}
+
+.slider-thumb-primary::-moz-range-track {
+  height: 1px;
+  background: transparent;
+  border: none;
+}

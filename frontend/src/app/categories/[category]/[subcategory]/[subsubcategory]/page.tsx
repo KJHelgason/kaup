@@ -197,7 +197,6 @@ export default function SubSubcategoryPage({ params }: SubSubcategoryPageProps) 
         { value: "all", label: language === "is" ? "Allt" : "All Listings" },
         { value: "auction", label: language === "is" ? "Uppboð" : "Auction" },
         { value: "buyNow", label: language === "is" ? "Kaupa núna" : "Buy It Now" },
-        { value: "bestOffer", label: language === "is" ? "Besta tilboð" : "Best Offer" }
     ]
 
     const sortOptions: { value: SortOption; label: string }[] = [

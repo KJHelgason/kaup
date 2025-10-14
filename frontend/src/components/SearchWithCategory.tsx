@@ -24,9 +24,12 @@ export function SearchWithCategory({ onSearch, placeholder }: SearchWithCategory
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [isLoading, setIsLoading] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+  const wrapperRef = useRef<HTMLDivElement>(null)
   const containerRef = useRef<HTMLFormElement>(null)
   const categoryRef = useRef<HTMLDivElement>(null)
+  const categoryMenuRef = useRef<HTMLDivElement>(null)
   const debounceTimer = useRef<NodeJS.Timeout | null>(null)
+
 
   // Fetch suggestions when query changes
   useEffect(() => {
@@ -43,25 +46,17 @@ export function SearchWithCategory({ onSearch, placeholder }: SearchWithCategory
     debounceTimer.current = setTimeout(async () => {
       setIsLoading(true)
       try {
-        console.log('🔍 Fetching suggestions for:', query)
         const url = `${API_URL}/listings/search-suggestions?query=${encodeURIComponent(query)}&limit=8`
-        console.log('📡 URL:', url)
         const response = await fetch(url)
-        console.log('📥 Response status:', response.status)
         
         if (response.ok) {
           const data = await response.json()
-          console.log('✅ Received data:', data)
           // Only show title suggestions, not category suggestions
           setSuggestions(data.titles || [])
           const shouldShow = (data.titles?.length || 0) > 0
-          console.log('📝 Suggestions set:', data.titles?.length || 0, 'items')
-          console.log('👀 Setting showSuggestions to:', shouldShow)
           setShowSuggestions(shouldShow)
         } else {
-          console.error('❌ Response not ok:', response.status, response.statusText)
           const errorText = await response.text()
-          console.error('Error details:', errorText)
         }
       } catch (error) {
         console.error('❌ Failed to fetch suggestions:', error)
@@ -80,10 +75,13 @@ export function SearchWithCategory({ onSearch, placeholder }: SearchWithCategory
   // Close dropdowns when clicking outside
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (containerRef.current && !containerRef.current.contains(event.target as Node)) {
+      if (wrapperRef.current && !wrapperRef.current.contains(event.target as Node)) {
         setShowSuggestions(false)
       }
-      if (categoryRef.current && !categoryRef.current.contains(event.target as Node)) {
+      // Check both the button and the menu for category dropdown
+      const clickedInsideCategoryButton = categoryRef.current && categoryRef.current.contains(event.target as Node)
+      const clickedInsideCategoryMenu = categoryMenuRef.current && categoryMenuRef.current.contains(event.target as Node)
+      if (!clickedInsideCategoryButton && !clickedInsideCategoryMenu) {
         setShowCategoryDropdown(false)
       }
     }
@@ -148,6 +146,7 @@ export function SearchWithCategory({ onSearch, placeholder }: SearchWithCategory
       params.set('category', selectedCategory)
     }
     
+    
     if (onSearch) {
       onSearch(suggestion, selectedCategory || undefined)
     } else {
@@ -173,7 +172,8 @@ export function SearchWithCategory({ onSearch, placeholder }: SearchWithCategory
       return language === "is" ? "Allir flokkar" : "All Categories"
     }
     const category = categories.find(c => c.value === selectedCategory)
-    return category ? category.label : selectedCategory
+    if (!category) return selectedCategory
+    return language === "is" ? category.label : (category.labelEn || category.label)
   }
 
   // Helper function to highlight the matching part (eBay style: matched part normal, rest bold)
@@ -200,14 +200,14 @@ export function SearchWithCategory({ onSearch, placeholder }: SearchWithCategory
   }
 
   return (
-    <div className="relative w-full">
+    <div ref={wrapperRef} className="relative w-full">
       <form 
         onSubmit={(e) => {
           e.preventDefault()
           handleSearch()
         }}
         ref={containerRef} 
-        className="w-full flex items-center border rounded-md overflow-hidden bg-background"
+        className="w-full flex items-center border rounded-full overflow-hidden bg-background"
       >
       {/* Search Input */}
       <div className="relative flex-1">
@@ -245,49 +245,56 @@ export function SearchWithCategory({ onSearch, placeholder }: SearchWithCategory
       {/* Category Dropdown */}
       <div ref={categoryRef} className="relative border-l">
         <button
-          onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+          type="button"
+          onClick={() => {
+            setShowCategoryDropdown(!showCategoryDropdown)
+          }}
           className="h-full px-3 py-2 text-sm hover:bg-muted transition-colors flex items-center gap-2 whitespace-nowrap min-w-[140px]"
         >
           <span className="truncate flex-1 text-left">{getSelectedCategoryLabel()}</span>
           <ChevronDown className="h-4 w-4 flex-shrink-0" />
         </button>
+      </div>
+      </form>
 
-        {/* Category Dropdown Menu */}
-        {showCategoryDropdown && (
-          <div className="absolute right-0 top-full mt-1 w-64 bg-background border rounded-md shadow-lg z-50 max-h-96 overflow-y-auto">
+      {/* Category Dropdown Menu - Outside form to avoid overflow-hidden */}
+      {(() => {
+        return showCategoryDropdown && (
+          <div ref={categoryMenuRef} className="absolute right-0 top-full mt-1 w-64 bg-background border rounded-md shadow-lg z-50 max-h-96 overflow-y-auto">
             <button
+              type="button"
               onClick={() => handleCategorySelect(null)}
               className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${
                 selectedCategory === null ? 'bg-primary/10 text-primary font-medium' : ''
               }`}
             >
-              {language === "is" ? "Allir flokkar" : "All Categories"}
+            {language === "is" ? "Allir flokkar" : "All Categories"}
+          </button>
+          <div className="border-t my-1"></div>
+          {categories.map((cat) => (
+            <button
+              type="button"
+              key={cat.value}
+              onClick={() => handleCategorySelect(cat.value)}
+              className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${
+                selectedCategory === cat.value ? 'bg-primary/10 text-primary font-medium' : ''
+              }`}
+            >
+              {language === "is" ? cat.label : (cat.labelEn || cat.label)}
             </button>
-            <div className="border-t my-1"></div>
-            {categories.map((cat) => (
-              <button
-                key={cat.value}
-                onClick={() => handleCategorySelect(cat.value)}
-                className={`w-full text-left px-4 py-2 text-sm hover:bg-muted transition-colors ${
-                  selectedCategory === cat.value ? 'bg-primary/10 text-primary font-medium' : ''
-                }`}
-              >
-                {cat.label}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
-      </form>
+          ))}
+        </div>
+        )
+      })()}
 
       {/* Suggestions Dropdown */}
       {(() => {
-        console.log('🔍 Render check - showSuggestions:', showSuggestions, 'suggestions.length:', suggestions.length)
         return showSuggestions && suggestions.length > 0 && (
           <div className="absolute left-0 right-0 top-full mt-1 bg-background border rounded-md shadow-lg max-h-80 overflow-y-auto z-50">
             {suggestions.map((suggestion, index) => (
               <button
                 key={index}
+                type="button"
                 onClick={() => handleSuggestionClick(suggestion)}
                 onMouseEnter={() => setSelectedIndex(index)}
                 className={`w-full text-left px-4 py-2.5 hover:bg-muted transition-colors flex items-center gap-3 ${

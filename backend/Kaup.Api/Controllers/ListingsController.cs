@@ -90,7 +90,14 @@ public class ListingsController : ControllerBase
         if (!string.IsNullOrEmpty(search))
         {
             var lowerSearch = search.ToLower();
-            query = query.Where(l => l.Title.ToLower().Contains(lowerSearch) || l.Description.ToLower().Contains(lowerSearch));
+            var searchTerms = lowerSearch.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
+            
+            // Match listings where title or description contains ANY of the search terms
+            query = query.Where(l => 
+                searchTerms.Any(term => l.Title.ToLower().Contains(term) || l.Description.ToLower().Contains(term))
+            );
+            
+            // After filtering, we'll sort by relevance (done later in the code)
         }
 
         if (minPrice.HasValue)
@@ -107,13 +114,29 @@ public class ListingsController : ControllerBase
 
         var totalCount = await query.CountAsync();
         
-        var listingsQuery = await query
-            .OrderByDescending(l => l.CreatedAt)
+        // Apply relevance-based sorting if there's a search query
+        if (!string.IsNullOrEmpty(search))
+        {
+            var lowerSearch = search.ToLower();
+            var searchTerms = lowerSearch.Split(new[] { ' ', ',', '-' }, StringSplitOptions.RemoveEmptyEntries);
+            
+            // Convert to list for in-memory sorting with complex relevance scoring
+            var allResults = await query.ToListAsync();
+            
+            // Calculate relevance score for each listing
+            var scoredResults = allResults.Select(l => new
+            {
+                Listing = l,
+                Score = CalculateRelevanceScore(l, lowerSearch, searchTerms)
+            })
+            .OrderByDescending(x => x.Score)
+            .ThenByDescending(x => x.Listing.CreatedAt)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .ToListAsync();
-
-        var listings = listingsQuery.Select(l => new ListingDto
+            .Select(x => x.Listing)
+            .ToList();
+            
+            var listings = scoredResults.Select(l => new ListingDto
             {
                 Id = l.Id,
                 Title = l.Title,
@@ -156,11 +179,70 @@ public class ListingsController : ControllerBase
             })
             .ToList();
 
-        Response.Headers.Append("X-Total-Count", totalCount.ToString());
-        Response.Headers.Append("X-Page", page.ToString());
-        Response.Headers.Append("X-Page-Size", pageSize.ToString());
+            Response.Headers.Append("X-Total-Count", totalCount.ToString());
+            Response.Headers.Append("X-Page", page.ToString());
+            Response.Headers.Append("X-Page-Size", pageSize.ToString());
 
-        return Ok(listings);
+            return Ok(listings);
+        }
+        else
+        {
+            // No search query - use default chronological sorting
+            var listingsQuery = await query
+                .OrderByDescending(l => l.CreatedAt)
+                .Skip((page - 1) * pageSize)
+                .Take(pageSize)
+                .ToListAsync();
+
+            var listings = listingsQuery.Select(l => new ListingDto
+            {
+                Id = l.Id,
+                Title = l.Title,
+                Description = l.Description,
+                Price = l.Price,
+                BuyNowPrice = l.BuyNowPrice,
+                Category = l.Category,
+                Subcategory = l.Subcategory,
+                SubSubcategory = l.SubSubcategory,
+                Condition = l.Condition,
+                ImageUrls = l.ImageUrls,
+                ThumbnailUrls = l.ImageUrls.Select(url => _s3Service.GetThumbnailUrl(url)).ToArray(),
+                ListingType = l.ListingType.ToString(),
+                Status = l.Status.ToString(),
+                IsFeatured = l.IsFeatured,
+                AcceptOffers = l.AcceptOffers,
+                CreatedAt = l.CreatedAt,
+                EndDate = l.EndDate,
+                Seller = new SellerDto
+                {
+                    Id = l.Seller.Id,
+                    Username = l.Seller.Username,
+                    FirstName = l.Seller.FirstName,
+                    LastName = l.Seller.LastName,
+                    ProfileImageUrl = l.Seller.ProfileImageUrl
+                },
+                BidCount = l.Bids.Count,
+                HighestBid = l.Bids.Any() ? l.Bids.Max(b => b.Amount) : (decimal?)null,
+                Quantity = l.Quantity,
+                QuantitySold = l.QuantitySold,
+                ItemLocation = l.ItemLocation,
+                ShippingCost = l.ShippingCost,
+                ShippingMethod = l.ShippingMethod,
+                HandlingTime = l.HandlingTime,
+                InternationalShipping = l.InternationalShipping,
+                ReturnsAccepted = l.ReturnsAccepted,
+                ReturnPeriod = l.ReturnPeriod,
+                ReturnShippingPaidBy = l.ReturnShippingPaidBy,
+                CategorySpecificFields = DeserializeCategoryFields(l.CategorySpecificFieldsJson)
+            })
+            .ToList();
+
+            Response.Headers.Append("X-Total-Count", totalCount.ToString());
+            Response.Headers.Append("X-Page", page.ToString());
+            Response.Headers.Append("X-Page-Size", pageSize.ToString());
+
+            return Ok(listings);
+        }
     }
 
     [HttpGet("search-suggestions")]
@@ -534,5 +616,63 @@ public class ListingsController : ControllerBase
             .ToListAsync();
 
         return Ok(categories);
+    }
+
+    /// <summary>
+    /// Calculate relevance score for a listing based on search query
+    /// Higher score = more relevant
+    /// </summary>
+    private int CalculateRelevanceScore(Listing listing, string fullSearchQuery, string[] searchTerms)
+    {
+        int score = 0;
+        var lowerTitle = listing.Title.ToLower();
+        var lowerDescription = listing.Description?.ToLower() ?? "";
+
+        // Exact phrase match in title (highest priority) +100
+        if (lowerTitle.Contains(fullSearchQuery))
+        {
+            score += 100;
+        }
+
+        // Exact phrase match in description +50
+        if (lowerDescription.Contains(fullSearchQuery))
+        {
+            score += 50;
+        }
+
+        // Title starts with search query +80
+        if (lowerTitle.StartsWith(fullSearchQuery))
+        {
+            score += 80;
+        }
+
+        // Count how many search terms appear in title
+        int titleTermMatches = searchTerms.Count(term => lowerTitle.Contains(term));
+        score += titleTermMatches * 20; // +20 per term in title
+
+        // Count how many search terms appear in description
+        int descTermMatches = searchTerms.Count(term => lowerDescription.Contains(term));
+        score += descTermMatches * 5; // +5 per term in description
+
+        // All terms present in title +30 bonus
+        if (titleTermMatches == searchTerms.Length && searchTerms.Length > 1)
+        {
+            score += 30;
+        }
+
+        // Featured listings get a small boost +10
+        if (listing.IsFeatured)
+        {
+            score += 10;
+        }
+
+        // Recent listings get a tiny boost (up to +5 for listings from last 7 days)
+        var daysSinceCreated = (DateTime.UtcNow - listing.CreatedAt).TotalDays;
+        if (daysSinceCreated < 7)
+        {
+            score += (int)(5 * (1 - daysSinceCreated / 7));
+        }
+
+        return score;
     }
 }
