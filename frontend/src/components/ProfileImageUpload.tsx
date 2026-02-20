@@ -7,6 +7,8 @@ import Cropper from 'react-easy-crop'
 import { Button } from './ui/button'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from './ui/dialog'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5075/api'
+
 interface ProfileImageUploadProps {
   onUpload: (url: string) => void
   currentImage?: string
@@ -81,7 +83,7 @@ export function ProfileImageUpload({ onUpload, currentImage }: ProfileImageUploa
 
   const deleteOldImage = async (imageUrl: string) => {
     try {
-      await fetch(`http://localhost:5075/api/upload/image?imageUrl=${encodeURIComponent(imageUrl)}`, {
+      await fetch(`${API_URL}/upload/image?imageUrl=${encodeURIComponent(imageUrl)}`, {
         method: 'DELETE',
       })
     } catch (error) {
@@ -131,7 +133,7 @@ export function ProfileImageUpload({ onUpload, currentImage }: ProfileImageUploa
       const formData = new FormData()
       formData.append('file', croppedBlob, 'profile.jpg')
 
-      const response = await fetch('http://localhost:5075/api/upload/profile-image', {
+      const response = await fetch(`${API_URL}/upload/profile-image`, {
         method: 'POST',
         body: formData,
       })

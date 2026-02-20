@@ -4,6 +4,8 @@ import { useState, useRef } from 'react'
 import { X, Loader2, Plus } from 'lucide-react'
 import Image from 'next/image'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5075/api'
+
 interface MultipleImageUploadProps {
   onUpload: (urls: string[]) => void
   currentImages?: string[]
@@ -17,7 +19,7 @@ export function MultipleImageUpload({ onUpload, currentImages = [], maxImages = 
 
   const deleteImage = async (imageUrl: string) => {
     try {
-      await fetch(`http://localhost:5075/api/upload/image?imageUrl=${encodeURIComponent(imageUrl)}`, {
+      await fetch(`${API_URL}/upload/image?imageUrl=${encodeURIComponent(imageUrl)}`, {
         method: 'DELETE',
       })
     } catch (error) {
@@ -55,7 +57,7 @@ export function MultipleImageUpload({ onUpload, currentImages = [], maxImages = 
       const formData = new FormData()
       files.forEach(file => formData.append('files', file))
 
-      const response = await fetch('http://localhost:5075/api/upload/listing-images', {
+      const response = await fetch(`${API_URL}/upload/listing-images`, {
         method: 'POST',
         body: formData,
       })

@@ -411,13 +411,17 @@ public class ListingsController : ControllerBase
     }
 
     [HttpPut("{id}")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> UpdateListing(Guid id, UpdateListingDto updateDto)
     {
         var listing = await _context.Listings.FindAsync(id);
         if (listing == null)
             return NotFound();
 
-        // TODO: Check if authenticated user is the seller
+        // Verify the authenticated user is the seller
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null || listing.SellerId != Guid.Parse(userId))
+            return Forbid();
 
         if (!string.IsNullOrEmpty(updateDto.Title))
             listing.Title = updateDto.Title;

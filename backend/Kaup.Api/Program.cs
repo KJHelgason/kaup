@@ -44,8 +44,11 @@ builder.Services.AddScoped<INotificationService, NotificationService>();
 Console.WriteLine("✓ Notification service registered");
 
 // Configure JWT Authentication
-var jwtSecret = builder.Configuration["Jwt:Secret"] ?? "your-super-secret-key-change-this-in-production-min-32-chars";
+var jwtSecret = builder.Configuration["Jwt:Secret"]
+    ?? throw new InvalidOperationException("Jwt:Secret must be configured. Set it in appsettings.json or environment variables.");
 var jwtKey = Encoding.ASCII.GetBytes(jwtSecret);
+var jwtIssuer = builder.Configuration["Jwt:Issuer"] ?? "kaup-api";
+var jwtAudience = builder.Configuration["Jwt:Audience"] ?? "kaup-frontend";
 
 builder.Services.AddAuthentication(options =>
 {
@@ -54,14 +57,16 @@ builder.Services.AddAuthentication(options =>
 })
 .AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false;
+    options.RequireHttpsMetadata = !builder.Environment.IsDevelopment();
     options.SaveToken = true;
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuerSigningKey = true,
         IssuerSigningKey = new SymmetricSecurityKey(jwtKey),
-        ValidateIssuer = false,
-        ValidateAudience = false,
+        ValidateIssuer = true,
+        ValidIssuer = jwtIssuer,
+        ValidateAudience = true,
+        ValidAudience = jwtAudience,
         ClockSkew = TimeSpan.Zero
     };
 });
@@ -69,12 +74,15 @@ builder.Services.AddAuthentication(options =>
 Console.WriteLine("✓ JWT authentication configured");
 
 // Configure CORS
+var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>()
+    ?? new[] { "http://localhost:3000" };
+
 builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowFrontend",
         policy =>
         {
-            policy.WithOrigins("http://localhost:3000")
+            policy.WithOrigins(allowedOrigins)
                 .AllowAnyHeader()
                 .AllowAnyMethod()
                 .WithExposedHeaders("X-Total-Count", "X-Page", "X-Page-Size");

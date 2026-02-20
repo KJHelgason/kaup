@@ -3,15 +3,5 @@
   "devCommand": "npm run dev",
   "installCommand": "npm install",
   "framework": "nextjs",
-  "outputDirectory": ".next",
-  "rewrites": [
-    {
-      "source": "/api/:path*",
-      "destination": "http://localhost:5075/api/:path*"
-    }
-  ],
-  "env": {
-    "NEXT_PUBLIC_API_URL": "https://your-backend-api.com",
-    "NEXT_PUBLIC_GOOGLE_CLIENT_ID": ""
-  }
+  "outputDirectory": ".next"
 }

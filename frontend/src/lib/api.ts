@@ -65,9 +65,7 @@ export async function getListings(params?: {
   const url = `${API_URL}/listings${queryParams.toString() ? `?${queryParams}` : ''}`
   
   try {
-    const response = await fetch(url, {
-      next: { revalidate: 10 } // Cache for 10 seconds
-    })
+    const response = await fetch(url)
     
     if (!response.ok) {
       throw new Error(`Failed to fetch listings: ${response.statusText}`)
@@ -85,9 +83,7 @@ export async function getListings(params?: {
 
 export async function getListing(id: string): Promise<Listing | null> {
   try {
-    const response = await fetch(`${API_URL}/listings/${id}`, {
-      next: { revalidate: 10 }
-    })
+    const response = await fetch(`${API_URL}/listings/${id}`)
     
     if (!response.ok) {
       return null
@@ -102,9 +98,7 @@ export async function getListing(id: string): Promise<Listing | null> {
 
 export async function getEndingSoonAuctions(count: number = 6): Promise<Listing[]> {
   try {
-    const response = await fetch(`${API_URL}/listings/ending-soon?count=${count}`, {
-      next: { revalidate: 30 } // Cache for 30 seconds (auctions change frequently)
-    })
+    const response = await fetch(`${API_URL}/listings/ending-soon?count=${count}`)
     
     if (!response.ok) {
       // Fallback to regular listings filtered for auctions if endpoint doesn't exist yet
@@ -121,9 +115,7 @@ export async function getEndingSoonAuctions(count: number = 6): Promise<Listing[
 
 export async function getFeaturedListings(count: number = 10): Promise<Listing[]> {
   try {
-    const response = await fetch(`${API_URL}/listings/featured?count=${count}`, {
-      next: { revalidate: 60 } // Cache for 1 minute
-    })
+    const response = await fetch(`${API_URL}/listings/featured?count=${count}`)
     
     if (!response.ok) {
       return []
@@ -138,9 +130,7 @@ export async function getFeaturedListings(count: number = 10): Promise<Listing[]
 
 export async function getCategories(): Promise<string[]> {
   try {
-    const response = await fetch(`${API_URL}/listings/categories`, {
-      next: { revalidate: 300 } // Cache for 5 minutes
-    })
+    const response = await fetch(`${API_URL}/listings/categories`)
     
     if (!response.ok) {
       return []

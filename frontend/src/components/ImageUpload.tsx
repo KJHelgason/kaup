@@ -4,6 +4,8 @@ import { useState, useRef } from 'react'
 import { X, Loader2, ImageIcon } from 'lucide-react'
 import Image from 'next/image'
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5075/api'
+
 interface ImageUploadProps {
   onUpload: (url: string) => void
   currentImage?: string
@@ -18,7 +20,7 @@ export function ImageUpload({ onUpload, currentImage, label = 'Upload Image', ty
 
   const deleteOldImage = async (imageUrl: string) => {
     try {
-      await fetch(`http://localhost:5075/api/upload/image?imageUrl=${encodeURIComponent(imageUrl)}`, {
+      await fetch(`${API_URL}/upload/image?imageUrl=${encodeURIComponent(imageUrl)}`, {
         method: 'DELETE',
       })
     } catch (error) {
@@ -62,7 +64,7 @@ export function ImageUpload({ onUpload, currentImage, label = 'Upload Image', ty
       formData.append('file', file)
 
       const endpoint = type === 'profile' ? 'profile-image' : 'listing-images'
-      const response = await fetch(`http://localhost:5075/api/upload/${endpoint}`, {
+      const response = await fetch(`${API_URL}/upload/${endpoint}`, {
         method: 'POST',
         body: formData,
       })

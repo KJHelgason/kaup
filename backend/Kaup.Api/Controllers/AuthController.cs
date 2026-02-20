@@ -152,15 +152,23 @@ public class AuthController : ControllerBase
 
     private static string HashPassword(string password)
     {
-        using var sha256 = SHA256.Create();
-        var hashedBytes = sha256.ComputeHash(Encoding.UTF8.GetBytes(password));
-        return Convert.ToBase64String(hashedBytes);
+        return BCrypt.Net.BCrypt.HashPassword(password);
     }
 
     private static bool VerifyPassword(string password, string hash)
     {
-        var passwordHash = HashPassword(password);
-        return passwordHash == hash;
+        try
+        {
+            return BCrypt.Net.BCrypt.Verify(password, hash);
+        }
+        catch
+        {
+            // Handle legacy SHA-256 hashes during migration period
+            using var sha256 = System.Security.Cryptography.SHA256.Create();
+            var hashedBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(password));
+            var sha256Hash = Convert.ToBase64String(hashedBytes);
+            return sha256Hash == hash;
+        }
     }
 
     [HttpPost("google")]
@@ -277,8 +285,11 @@ public class AuthController : ControllerBase
 
     private string GenerateJwtToken(User user)
     {
-        var jwtSecret = _configuration["Jwt:Secret"] ?? "your-super-secret-key-change-this-in-production-min-32-chars";
+        var jwtSecret = _configuration["Jwt:Secret"]
+            ?? throw new InvalidOperationException("Jwt:Secret must be configured");
         var key = Encoding.ASCII.GetBytes(jwtSecret);
+        var issuer = _configuration["Jwt:Issuer"] ?? "kaup-api";
+        var audience = _configuration["Jwt:Audience"] ?? "kaup-frontend";
 
         var tokenDescriptor = new SecurityTokenDescriptor
         {
@@ -290,6 +301,8 @@ public class AuthController : ControllerBase
                 new Claim(ClaimTypes.Role, user.IsAdmin ? "Admin" : "User")
             }),
             Expires = DateTime.UtcNow.AddDays(7),
+            Issuer = issuer,
+            Audience = audience,
             SigningCredentials = new SigningCredentials(
                 new SymmetricSecurityKey(key),
                 SecurityAlgorithms.HmacSha256Signature)
