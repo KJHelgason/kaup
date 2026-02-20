@@ -1,5 +1,6 @@
 using Kaup.Api.Data;
 using Kaup.Api.Models;
+using Kaup.Api.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Kaup.Api.Services;
@@ -54,7 +55,7 @@ public class NotificationService : INotificationService
 
         if (unreadOnly)
         {
-            query = query.Where(n => !n.IsRead);
+            query = query.Where(n => n.ReadAt == null);
         }
 
         return await query
@@ -66,35 +67,21 @@ public class NotificationService : INotificationService
     public async Task<int> GetUnreadCountAsync(Guid userId)
     {
         return await _context.Notifications
-            .Where(n => n.UserId == userId && !n.IsRead)
+            .Where(n => n.UserId == userId && n.ReadAt == null)
             .CountAsync();
     }
 
     public async Task MarkAsReadAsync(Guid[] notificationIds, Guid userId)
     {
-        var notifications = await _context.Notifications
-            .Where(n => notificationIds.Contains(n.Id) && n.UserId == userId)
-            .ToListAsync();
-
-        foreach (var notification in notifications)
-        {
-            notification.IsRead = true;
-        }
-
-        await _context.SaveChangesAsync();
+        await _context.Notifications
+            .Where(n => notificationIds.Contains(n.Id) && n.UserId == userId && n.ReadAt == null)
+            .ExecuteUpdateAsync(n => n.SetProperty(x => x.ReadAt, DateTime.UtcNow));
     }
 
     public async Task MarkAllAsReadAsync(Guid userId)
     {
-        var notifications = await _context.Notifications
-            .Where(n => n.UserId == userId && !n.IsRead)
-            .ToListAsync();
-
-        foreach (var notification in notifications)
-        {
-            notification.IsRead = true;
-        }
-
-        await _context.SaveChangesAsync();
+        await _context.Notifications
+            .Where(n => n.UserId == userId && n.ReadAt == null)
+            .ExecuteUpdateAsync(n => n.SetProperty(x => x.ReadAt, DateTime.UtcNow));
     }
 }

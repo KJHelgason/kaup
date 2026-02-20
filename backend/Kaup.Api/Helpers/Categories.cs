@@ -1,3 +1,7 @@
+// DEPRECATED: This hardcoded category list is being replaced by the Category database table.
+// It is kept temporarily for backward compatibility during the migration to PostgreSQL.
+// TODO: Remove this file once categories are seeded in the database and all references are updated.
+
 namespace Kaup.Api.Helpers;
 
 public class CategoryInfo

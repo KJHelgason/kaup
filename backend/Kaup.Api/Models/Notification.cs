@@ -1,3 +1,5 @@
+using Kaup.Api.Models.Enums;
+
 namespace Kaup.Api.Models;
 
 public class Notification
@@ -9,25 +11,12 @@ public class Notification
     public string Message { get; set; } = string.Empty;
     public string? LinkUrl { get; set; }
     public string? RelatedEntityId { get; set; } // ID of related offer, listing, bid, etc.
-    public bool IsRead { get; set; } = false;
+    public DateTime? ReadAt { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
+
+    // Computed property
+    public bool IsRead => ReadAt.HasValue;
 
     // Navigation properties
     public User User { get; set; } = null!;
-}
-
-public enum NotificationType
-{
-    OfferReceived,
-    OfferAccepted,
-    OfferDeclined,
-    OfferCountered,
-    OfferExpiring,
-    BidPlaced,
-    Outbid,
-    AuctionEnding,
-    AuctionWon,
-    ItemSold,
-    PaymentReceived,
-    Message
 }

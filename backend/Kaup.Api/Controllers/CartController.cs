@@ -1,6 +1,7 @@
 using Kaup.Api.Data;
 using Kaup.Api.DTOs;
 using Kaup.Api.Models;
+using Kaup.Api.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;

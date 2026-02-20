@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Kaup.Api.Data;
 using Kaup.Api.Models;
+using Kaup.Api.Models.Enums;
 using Kaup.Api.DTOs;
 
 namespace Kaup.Api.Controllers;
@@ -37,9 +38,12 @@ public class UsersController : ControllerBase
             Address = user.Address,
             City = user.City,
             PostalCode = user.PostalCode,
-            AverageRating = user.AverageRating,
+            AverageRating = (double)user.AverageRating,
             TotalRatings = user.TotalRatings,
             TotalSales = user.TotalSales,
+            IsAdmin = user.IsAdmin,
+            IsEmailVerified = user.IsEmailVerified,
+            LastLoginAt = user.LastLoginAt,
             CreatedAt = user.CreatedAt
         });
     }
@@ -64,21 +68,28 @@ public class UsersController : ControllerBase
             Address = user.Address,
             City = user.City,
             PostalCode = user.PostalCode,
-            AverageRating = user.AverageRating,
+            AverageRating = (double)user.AverageRating,
             TotalRatings = user.TotalRatings,
             TotalSales = user.TotalSales,
+            IsAdmin = user.IsAdmin,
+            IsEmailVerified = user.IsEmailVerified,
+            LastLoginAt = user.LastLoginAt,
             CreatedAt = user.CreatedAt
         });
     }
 
     [HttpPut("{id}")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<IActionResult> UpdateProfile(Guid id, UpdateProfileDto updateDto)
     {
         var user = await _context.Users.FindAsync(id);
         if (user == null)
             return NotFound();
 
-        // TODO: Verify that the authenticated user matches the id
+        // Verify the authenticated user matches the profile being updated
+        var authenticatedUserId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (authenticatedUserId == null || id != Guid.Parse(authenticatedUserId))
+            return Forbid();
 
         // Update username with validation
         if (!string.IsNullOrWhiteSpace(updateDto.Username))
@@ -159,7 +170,7 @@ public class UsersController : ControllerBase
             Price = l.Price,
             BuyNowPrice = l.BuyNowPrice,
             Category = l.Category,
-            Condition = l.Condition,
+            Condition = l.Condition.ToString(),
             ImageUrls = l.ImageUrls,
             ListingType = l.ListingType.ToString(),
             Status = l.Status.ToString(),
@@ -210,6 +221,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost("{id}/reviews")]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<ActionResult<ReviewDto>> CreateReview(Guid id, CreateReviewDto createDto)
     {
         // Verify reviewed user exists
@@ -217,9 +229,13 @@ public class UsersController : ControllerBase
         if (reviewedUser == null)
             return NotFound("User not found");
 
-        // TODO: Get reviewer ID from authenticated user
-        // For now, use the id parameter as reviewer
-        var reviewer = await _context.Users.FindAsync(id);
+        // Get reviewer ID from authenticated user
+        var reviewerIdStr = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (reviewerIdStr == null)
+            return Unauthorized();
+        var reviewerId = Guid.Parse(reviewerIdStr);
+
+        var reviewer = await _context.Users.FindAsync(reviewerId);
         if (reviewer == null)
             return NotFound("Reviewer not found");
 
@@ -231,22 +247,25 @@ public class UsersController : ControllerBase
         {
             Rating = createDto.Rating,
             Comment = createDto.Comment,
-            ReviewerId = id,
+            ReviewerId = reviewerId,
             ReviewedUserId = createDto.ReviewedUserId,
             ListingId = createDto.ListingId
         };
 
         _context.Reviews.Add(review);
 
-        // Update user's average rating
-        var userReviews = await _context.Reviews
+        // Use SQL aggregation instead of loading all reviews into memory
+        var reviewStats = await _context.Reviews
             .Where(r => r.ReviewedUserId == createDto.ReviewedUserId)
-            .ToListAsync();
-        
-        userReviews.Add(review);
-        
-        reviewedUser.TotalRatings = userReviews.Count;
-        reviewedUser.AverageRating = userReviews.Average(r => r.Rating);
+            .GroupBy(r => r.ReviewedUserId)
+            .Select(g => new { Count = g.Count(), Average = g.Average(r => (double)r.Rating) })
+            .FirstOrDefaultAsync();
+
+        if (reviewStats != null)
+        {
+            reviewedUser.TotalRatings = reviewStats.Count;
+            reviewedUser.AverageRating = (decimal)reviewStats.Average;
+        }
 
         await _context.SaveChangesAsync();
 

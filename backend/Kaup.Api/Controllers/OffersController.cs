@@ -1,6 +1,7 @@
 using Kaup.Api.Data;
 using Kaup.Api.DTOs;
 using Kaup.Api.Models;
+using Kaup.Api.Models.Enums;
 using Kaup.Api.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -300,10 +301,22 @@ public class OffersController : ControllerBase
         {
             case "accept":
                 offer.Status = OfferStatus.Accepted;
-                
+
                 // Mark listing as sold
                 offer.Listing.Status = ListingStatus.Sold;
-                
+
+                // Cancel all other pending offers on this listing
+                var siblingOffers = await _context.Offers
+                    .Where(o => o.ListingId == offer.ListingId
+                             && o.Id != offer.Id
+                             && o.Status == OfferStatus.Pending)
+                    .ToListAsync();
+                foreach (var sibling in siblingOffers)
+                {
+                    sibling.Status = OfferStatus.Declined;
+                    sibling.RespondedAt = DateTime.UtcNow;
+                }
+
                 await _notificationService.CreateNotificationAsync(
                     offer.BuyerId,
                     NotificationType.OfferAccepted,

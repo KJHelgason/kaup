@@ -8,7 +8,8 @@ public class NotificationDto
     public string Message { get; set; } = string.Empty;
     public string? LinkUrl { get; set; }
     public string? RelatedEntityId { get; set; }
-    public bool IsRead { get; set; }
+    public DateTime? ReadAt { get; set; }
+    public bool IsRead => ReadAt.HasValue;
     public DateTime CreatedAt { get; set; }
 }
 

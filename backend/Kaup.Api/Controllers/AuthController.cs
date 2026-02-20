@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Kaup.Api.Data;
 using Kaup.Api.Models;
+using Kaup.Api.Models.Enums;
 using Kaup.Api.DTOs;
 using System.Security.Cryptography;
 using System.Text;
@@ -62,7 +63,7 @@ public class AuthController : ControllerBase
             Username = registerDto.Username,
             Email = registerDto.Email,
             PasswordHash = passwordHash,
-            AuthProvider = "Local"
+            AuthProvider = AuthProvider.Local
         };
 
         _context.Users.Add(user);
@@ -71,25 +72,7 @@ public class AuthController : ControllerBase
         // Generate JWT token
         var token = GenerateJwtToken(user);
 
-        var userDto = new UserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            PhoneNumber = user.PhoneNumber,
-            ProfileImageUrl = user.ProfileImageUrl,
-            Bio = user.Bio,
-            Address = user.Address,
-            City = user.City,
-            PostalCode = user.PostalCode,
-            AverageRating = user.AverageRating,
-            TotalRatings = user.TotalRatings,
-            TotalSales = user.TotalSales,
-            IsAdmin = user.IsAdmin,
-            CreatedAt = user.CreatedAt
-        };
+        var userDto = MapToUserDto(user);
 
         return Ok(new AuthResponseDto
         {
@@ -123,25 +106,7 @@ public class AuthController : ControllerBase
         // Generate JWT token
         var token = GenerateJwtToken(user);
 
-        var userDto = new UserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            PhoneNumber = user.PhoneNumber,
-            ProfileImageUrl = user.ProfileImageUrl,
-            Bio = user.Bio,
-            Address = user.Address,
-            City = user.City,
-            PostalCode = user.PostalCode,
-            AverageRating = user.AverageRating,
-            TotalRatings = user.TotalRatings,
-            TotalSales = user.TotalSales,
-            IsAdmin = user.IsAdmin,
-            CreatedAt = user.CreatedAt
-        };
+        var userDto = MapToUserDto(user);
 
         return Ok(new AuthResponseDto
         {
@@ -195,7 +160,7 @@ public class AuthController : ControllerBase
                 if (string.IsNullOrEmpty(user.GoogleId))
                 {
                     user.GoogleId = googleAuthDto.GoogleId;
-                    user.AuthProvider = "Google";
+                    user.AuthProvider = AuthProvider.Google;
                     // Only set Google profile image if user doesn't have a custom uploaded image
                     // Check if current image is from S3 (uploaded) or missing
                     var hasUploadedImage = !string.IsNullOrEmpty(user.ProfileImageUrl) && 
@@ -232,7 +197,7 @@ public class AuthController : ControllerBase
                     LastName = googleAuthDto.LastName,
                     ProfileImageUrl = googleAuthDto.ProfileImageUrl,
                     PasswordHash = "", // No password for Google auth
-                    AuthProvider = "Google"
+                    AuthProvider = AuthProvider.Google
                 };
 
                 _context.Users.Add(user);
@@ -256,25 +221,7 @@ public class AuthController : ControllerBase
         // Generate JWT token
         var token = GenerateJwtToken(user);
 
-        var userDto = new UserDto
-        {
-            Id = user.Id,
-            Username = user.Username,
-            Email = user.Email,
-            FirstName = user.FirstName,
-            LastName = user.LastName,
-            PhoneNumber = user.PhoneNumber,
-            ProfileImageUrl = user.ProfileImageUrl,
-            Bio = user.Bio,
-            Address = user.Address,
-            City = user.City,
-            PostalCode = user.PostalCode,
-            AverageRating = user.AverageRating,
-            TotalRatings = user.TotalRatings,
-            TotalSales = user.TotalSales,
-            IsAdmin = user.IsAdmin,
-            CreatedAt = user.CreatedAt
-        };
+        var userDto = MapToUserDto(user);
 
         return Ok(new AuthResponseDto
         {
@@ -282,6 +229,28 @@ public class AuthController : ControllerBase
             User = userDto
         });
     }
+
+    private static UserDto MapToUserDto(User user) => new()
+    {
+        Id = user.Id,
+        Username = user.Username,
+        Email = user.Email,
+        FirstName = user.FirstName,
+        LastName = user.LastName,
+        PhoneNumber = user.PhoneNumber,
+        ProfileImageUrl = user.ProfileImageUrl,
+        Bio = user.Bio,
+        Address = user.Address,
+        City = user.City,
+        PostalCode = user.PostalCode,
+        AverageRating = (double)user.AverageRating,
+        TotalRatings = user.TotalRatings,
+        TotalSales = user.TotalSales,
+        IsAdmin = user.IsAdmin,
+        IsEmailVerified = user.IsEmailVerified,
+        LastLoginAt = user.LastLoginAt,
+        CreatedAt = user.CreatedAt
+    };
 
     private string GenerateJwtToken(User user)
     {

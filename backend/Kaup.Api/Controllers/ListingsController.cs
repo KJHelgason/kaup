@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Kaup.Api.Data;
 using Kaup.Api.Models;
+using Kaup.Api.Models.Enums;
 using Kaup.Api.DTOs;
 using Kaup.Api.Services;
 using Kaup.Api.Helpers;
@@ -146,7 +147,7 @@ public class ListingsController : ControllerBase
                 Category = l.Category,
                 Subcategory = l.Subcategory,
                 SubSubcategory = l.SubSubcategory,
-                Condition = l.Condition,
+                Condition = l.Condition.ToString(),
                 ImageUrls = l.ImageUrls,
                 ThumbnailUrls = l.ImageUrls.Select(url => _s3Service.GetThumbnailUrl(url)).ToArray(),
                 ListingType = l.ListingType.ToString(),
@@ -204,7 +205,7 @@ public class ListingsController : ControllerBase
                 Category = l.Category,
                 Subcategory = l.Subcategory,
                 SubSubcategory = l.SubSubcategory,
-                Condition = l.Condition,
+                Condition = l.Condition.ToString(),
                 ImageUrls = l.ImageUrls,
                 ThumbnailUrls = l.ImageUrls.Select(url => _s3Service.GetThumbnailUrl(url)).ToArray(),
                 ListingType = l.ListingType.ToString(),
@@ -287,7 +288,7 @@ public class ListingsController : ControllerBase
             Category = listing.Category,
             Subcategory = listing.Subcategory,
             SubSubcategory = listing.SubSubcategory,
-            Condition = listing.Condition,
+            Condition = listing.Condition.ToString(),
             ImageUrls = listing.ImageUrls,
             ThumbnailUrls = listing.ImageUrls.Select(url => _s3Service.GetThumbnailUrl(url)).ToArray(),
             ListingType = listing.ListingType.ToString(),
@@ -323,6 +324,7 @@ public class ListingsController : ControllerBase
     }
 
     [HttpPost]
+    [Microsoft.AspNetCore.Authorization.Authorize]
     public async Task<ActionResult<ListingDto>> CreateListing(CreateListingDto createDto)
     {
         // Get seller from the provided SellerId
@@ -331,6 +333,11 @@ public class ListingsController : ControllerBase
         {
             return BadRequest("Invalid seller ID");
         }
+
+        // Verify the authenticated user is the seller
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null || seller.Id != Guid.Parse(userId))
+            return Forbid();
 
         var listing = new Listing
         {
@@ -341,7 +348,7 @@ public class ListingsController : ControllerBase
             Category = createDto.Category,
             Subcategory = createDto.Subcategory,
             SubSubcategory = createDto.SubSubcategory,
-            Condition = createDto.Condition,
+            Condition = Enum.Parse<Condition>(createDto.Condition),
             ImageUrls = createDto.ImageUrls,
             ListingType = Enum.Parse<ListingType>(createDto.ListingType),
             IsFeatured = createDto.IsFeatured,
@@ -375,7 +382,7 @@ public class ListingsController : ControllerBase
             Price = listing.Price,
             BuyNowPrice = listing.BuyNowPrice,
             Category = listing.Category,
-            Condition = listing.Condition,
+            Condition = listing.Condition.ToString(),
             ImageUrls = listing.ImageUrls,
             ThumbnailUrls = listing.ImageUrls.Select(url => _s3Service.GetThumbnailUrl(url)).ToArray(),
             ListingType = listing.ListingType.ToString(),
@@ -434,7 +441,7 @@ public class ListingsController : ControllerBase
         if (!string.IsNullOrEmpty(updateDto.Category))
             listing.Category = updateDto.Category;
         if (!string.IsNullOrEmpty(updateDto.Condition))
-            listing.Condition = updateDto.Condition;
+            listing.Condition = Enum.Parse<Condition>(updateDto.Condition);
         if (updateDto.ImageUrls != null)
             listing.ImageUrls = updateDto.ImageUrls;
         if (!string.IsNullOrEmpty(updateDto.Status))
@@ -448,7 +455,8 @@ public class ListingsController : ControllerBase
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> DeleteListing(Guid id, [FromQuery] Guid sellerId)
+    [Microsoft.AspNetCore.Authorization.Authorize]
+    public async Task<IActionResult> DeleteListing(Guid id)
     {
         var listing = await _context.Listings
             .Include(l => l.Bids)
@@ -457,8 +465,9 @@ public class ListingsController : ControllerBase
         if (listing == null)
             return NotFound(new { message = "Listing not found" });
 
-        // Verify that the user deleting the listing is the seller
-        if (listing.SellerId != sellerId)
+        // Verify that the authenticated user is the seller
+        var userId = User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value;
+        if (userId == null || listing.SellerId != Guid.Parse(userId))
             return Forbid();
 
         var bidCount = listing.Bids.Count;
@@ -500,6 +509,7 @@ public class ListingsController : ControllerBase
     }
 
     [HttpPatch("{id}/featured")]
+    [Microsoft.AspNetCore.Authorization.Authorize(Roles = "Admin")]
     public async Task<IActionResult> ToggleFeatured(Guid id, [FromBody] ToggleFeaturedDto dto)
     {
         var listing = await _context.Listings.FindAsync(id);
@@ -537,7 +547,7 @@ public class ListingsController : ControllerBase
                 Price = l.Price,
                 BuyNowPrice = l.BuyNowPrice,
                 Category = l.Category,
-                Condition = l.Condition,
+                Condition = l.Condition.ToString(),
                 ImageUrls = l.ImageUrls,
                 ListingType = l.ListingType.ToString(),
                 Status = l.Status.ToString(),
@@ -585,7 +595,7 @@ public class ListingsController : ControllerBase
                 Price = l.Price,
                 BuyNowPrice = l.BuyNowPrice,
                 Category = l.Category,
-                Condition = l.Condition,
+                Condition = l.Condition.ToString(),
                 ImageUrls = l.ImageUrls,
                 ListingType = l.ListingType.ToString(),
                 Status = l.Status.ToString(),

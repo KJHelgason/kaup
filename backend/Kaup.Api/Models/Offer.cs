@@ -1,3 +1,5 @@
+using Kaup.Api.Models.Enums;
+
 namespace Kaup.Api.Models;
 
 public class Offer
@@ -20,14 +22,4 @@ public class Offer
     public User Seller { get; set; } = null!;
     public Offer? ParentOffer { get; set; }
     public ICollection<Offer> CounterOffers { get; set; } = new List<Offer>();
-}
-
-public enum OfferStatus
-{
-    Pending,
-    Accepted,
-    Declined,
-    Countered,
-    Expired,
-    Withdrawn
 }

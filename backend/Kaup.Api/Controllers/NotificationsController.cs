@@ -48,7 +48,7 @@ public class NotificationsController : ControllerBase
             Message = n.Message,
             LinkUrl = n.LinkUrl,
             RelatedEntityId = n.RelatedEntityId,
-            IsRead = n.IsRead,
+            ReadAt = n.ReadAt,
             CreatedAt = n.CreatedAt
         }).ToList();
 

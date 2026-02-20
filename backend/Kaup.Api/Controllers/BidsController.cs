@@ -1,6 +1,7 @@
 using Kaup.Api.Data;
 using Kaup.Api.DTOs;
 using Kaup.Api.Models;
+using Kaup.Api.Models.Enums;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -34,15 +35,11 @@ public class BidsController : ControllerBase
         var bids = await _context.Bids
             .Include(b => b.Bidder)
             .Where(b => b.ListingId == listingId)
-            .ToListAsync();
-
-        // Sort in memory to avoid SQLite decimal ordering limitation
-        var sortedBids = bids
             .OrderByDescending(b => b.Amount)
             .ThenByDescending(b => b.CreatedAt)
-            .ToList();
+            .ToListAsync();
 
-        var bidDtos = sortedBids.Select(b => new BidDto
+        var bidDtos = bids.Select(b => new BidDto
         {
             Id = b.Id,
             Amount = b.Amount,
@@ -127,12 +124,12 @@ public class BidsController : ControllerBase
 
         // Get current highest bid
         var highestBid = listing.Bids.Any() ? listing.Bids.Max(b => b.Amount) : listing.Price;
-        
+
         // Validate bid amount (must be higher than current highest)
         if (placeBidDto.Amount <= highestBid)
         {
-            return BadRequest(new 
-            { 
+            return BadRequest(new
+            {
                 message = $"Bid must be higher than the current highest bid of {highestBid:N0} kr.",
                 currentHighestBid = highestBid
             });
@@ -142,8 +139,8 @@ public class BidsController : ControllerBase
         var minimumIncrement = 100m;
         if (placeBidDto.Amount < highestBid + minimumIncrement)
         {
-            return BadRequest(new 
-            { 
+            return BadRequest(new
+            {
                 message = $"Bid must be at least {minimumIncrement:N0} kr. higher than the current bid",
                 minimumBid = highestBid + minimumIncrement
             });
@@ -158,8 +155,18 @@ public class BidsController : ControllerBase
             CreatedAt = DateTime.UtcNow
         };
 
-        _context.Bids.Add(bid);
-        await _context.SaveChangesAsync();
+        using var transaction = await _context.Database.BeginTransactionAsync();
+        try
+        {
+            _context.Bids.Add(bid);
+            await _context.SaveChangesAsync();
+            await transaction.CommitAsync();
+        }
+        catch
+        {
+            await transaction.RollbackAsync();
+            throw;
+        }
 
         // Reload bid with bidder info
         var createdBid = await _context.Bids

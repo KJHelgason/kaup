@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Kaup.Api.Data;
 using Kaup.Api.Models;
+using Kaup.Api.Models.Enums;
 using System.Security.Claims;
 
 namespace Kaup.Api.Controllers;

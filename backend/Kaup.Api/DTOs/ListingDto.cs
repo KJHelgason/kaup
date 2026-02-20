@@ -4,13 +4,16 @@ public class ListingDto
 {
     public Guid Id { get; set; }
     public string Title { get; set; } = string.Empty;
+    public string? Slug { get; set; }
     public string Description { get; set; } = string.Empty;
     public decimal Price { get; set; }
     public decimal? BuyNowPrice { get; set; }
     public string Category { get; set; } = string.Empty;
     public string? Subcategory { get; set; }
     public string? SubSubcategory { get; set; }
+    public Guid? CategoryId { get; set; }
     public string Condition { get; set; } = string.Empty;
+    public int ViewCount { get; set; }
     public string[] ImageUrls { get; set; } = Array.Empty<string>();
     public string[] ThumbnailUrls { get; set; } = Array.Empty<string>(); // Auto-generated thumbnails
     public string ListingType { get; set; } = string.Empty;
@@ -61,6 +64,7 @@ public class CreateListingDto
     public string Category { get; set; } = string.Empty;
     public string? Subcategory { get; set; }
     public string? SubSubcategory { get; set; }
+    public Guid? CategoryId { get; set; }
     public string Condition { get; set; } = string.Empty;
     public string[] ImageUrls { get; set; } = Array.Empty<string>();
     public string ListingType { get; set; } = string.Empty;
@@ -95,9 +99,20 @@ public class UpdateListingDto
     public decimal? Price { get; set; }
     public decimal? BuyNowPrice { get; set; }
     public string? Category { get; set; }
+    public string? Subcategory { get; set; }
+    public string? SubSubcategory { get; set; }
     public string? Condition { get; set; }
     public string[]? ImageUrls { get; set; }
     public string? Status { get; set; }
+    public bool? AcceptOffers { get; set; }
+    public decimal? ShippingCost { get; set; }
+    public string? ShippingMethod { get; set; }
+    public int? HandlingTime { get; set; }
+    public bool? InternationalShipping { get; set; }
+    public bool? ReturnsAccepted { get; set; }
+    public int? ReturnPeriod { get; set; }
+    public string? ReturnShippingPaidBy { get; set; }
+    public Dictionary<string, object>? CategorySpecificFields { get; set; }
 }
 
 public class ToggleFeaturedDto

@@ -1,11 +1,23 @@
 using Kaup.Api.Data;
 using Kaup.Api.Services;
+using Kaup.Api.Models.Enums;
 using Microsoft.EntityFrameworkCore;
 using Amazon.S3;
 using Amazon.Runtime;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using Npgsql;
+
+// Register PostgreSQL enum types
+NpgsqlConnection.GlobalTypeMapper.MapEnum<ListingType>();
+NpgsqlConnection.GlobalTypeMapper.MapEnum<ListingStatus>();
+NpgsqlConnection.GlobalTypeMapper.MapEnum<OfferStatus>();
+NpgsqlConnection.GlobalTypeMapper.MapEnum<NotificationType>();
+NpgsqlConnection.GlobalTypeMapper.MapEnum<Condition>();
+NpgsqlConnection.GlobalTypeMapper.MapEnum<AuthProvider>();
+NpgsqlConnection.GlobalTypeMapper.MapEnum<OrderStatus>();
+NpgsqlConnection.GlobalTypeMapper.MapEnum<PaymentStatus>();
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -14,11 +26,12 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-// Configure Database - Use SQLite for development
+// Configure Database - PostgreSQL
 builder.Services.AddDbContext<KaupDbContext>(options =>
-    options.UseSqlite(builder.Configuration.GetConnectionString("SqliteConnection")));
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"))
+           .UseSnakeCaseNamingConvention());
 
-Console.WriteLine("✓ Using SQLite database (kaup.db)");
+Console.WriteLine("✓ Using PostgreSQL database");
 
 // Configure AWS S3
 var awsOptions = builder.Configuration.GetSection("AWS");

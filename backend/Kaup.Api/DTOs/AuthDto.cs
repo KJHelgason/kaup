@@ -1,9 +1,16 @@
+using System.ComponentModel.DataAnnotations;
+
 namespace Kaup.Api.DTOs;
 
 public class RegisterDto
 {
+    [Required, RegularExpression(@"^[a-zA-Z0-9_-]{3,20}$")]
     public string Username { get; set; } = string.Empty;
+
+    [Required, EmailAddress, MaxLength(255)]
     public string Email { get; set; } = string.Empty;
+
+    [Required, MinLength(6)]
     public string Password { get; set; } = string.Empty;
 }
 
@@ -39,6 +46,8 @@ public class UserDto
     public int TotalRatings { get; set; }
     public int TotalSales { get; set; }
     public bool IsAdmin { get; set; }
+    public bool IsEmailVerified { get; set; }
+    public DateTime? LastLoginAt { get; set; }
     public DateTime CreatedAt { get; set; }
 }
 
